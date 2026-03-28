@@ -1,0 +1,49 @@
+/* Auto Decoder Pro - Modern CSS Theme */
+
+window {
+    background-color: #1e1e2e;
+}
+
+.titlebar {
+    background-color: #181825;
+}
+
+button {
+    background-color: #313244;
+    color: #cdd6f4;
+    border-radius: 8px;
+    border: none;
+    padding: 8px 16px;
+    transition: all 0.2s ease;
+}
+
+button:hover {
+    background-color: #45475a;
+    transform: scale(1.02);
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+entry, textview {
+    background-color: #11111b;
+    color: #cdd6f4;
+    border-radius: 8px;
+    border: 1px solid #313244;
+    padding: 8px;
+}
+
+entry:focus, textview:focus {
+    border-color: #89b4fa;
+    outline: none;
+}
+
+label {
+    color: #cdd6f4;
+}
+
+.statusbar {
+    background-color: #181825;
+    color: #a6e3a1;
+}
