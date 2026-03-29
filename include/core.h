@@ -3,6 +3,8 @@
 
 #include <glib.h>
 #include "errors.h"
+#include "plugin.h"
+#include "lru_cache.h"
 
 typedef enum {
     CORE_MODE_AUTO,
@@ -25,6 +27,8 @@ typedef struct {
     gboolean from_cache;
     int decode_depth;
 } DecodeResult;
+
+PluginManager* core_get_plugin_manager(void);
 
 typedef struct {
     char *output;
@@ -60,5 +64,8 @@ void core_reset_stats(void);
 
 void decode_result_free(DecodeResult *result);
 void encode_result_free(EncodeResult *result);
+
+PluginManager* core_get_plugin_manager(void);
+DecodeResult* core_decode_with_mode(const char *input, CoreMode mode);
 
 #endif /* CORE_H */

@@ -31,6 +31,3 @@ static gboolean base64_detect(const char *input) {
 void base64_plugin_init(void) {
     g_plugin_registry->register_plugin("Base64", base64_decode, base64_encode, base64_detect, 100);
 }
-const char* plugin_version = "1.0.0";
-const char* plugin_author = "Auto Decoder Team";
-const char* plugin_description = "Base64 encode/decode plugin";

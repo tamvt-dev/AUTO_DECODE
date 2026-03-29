@@ -1,0 +1,26 @@
+window {
+    background-color: #f5f5f5;
+}
+
+button {
+    background-color: #ffffff;
+    color: #1e1e2e;
+}
+
+entry {
+    background-color: #ffffff;
+    color: #1e1e2e;
+}
+
+textview {
+    background-color: #ffffff;
+}
+
+textview text {
+    background-color: #ffffff;
+    color: #1e1e2e;
+}
+
+label {
+    color: #1e1e2e;
+}

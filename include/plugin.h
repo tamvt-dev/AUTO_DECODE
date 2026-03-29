@@ -3,43 +3,35 @@
 
 #include <glib.h>
 
-typedef struct Plugin Plugin;
-
 typedef char* (*PluginDecodeFunc)(const char *input);
 typedef char* (*PluginEncodeFunc)(const char *input);
 typedef gboolean (*PluginDetectFunc)(const char *input);
-typedef void (*PluginInitFunc)(void);
-typedef void (*PluginCleanupFunc)(void);
 
-struct Plugin {
+typedef struct Plugin {
     char *name;
-    char *version;
-    char *author;
-    char *description;
-    void *handle;
-    
     PluginDecodeFunc decode;
     PluginEncodeFunc encode;
     PluginDetectFunc detect;
-    PluginInitFunc init;
-    PluginCleanupFunc cleanup;
-    
-    gboolean loaded;
-    gboolean enabled;
     int priority;
-};
+    gboolean enabled;
+} Plugin;
 
-typedef struct PluginManager PluginManager;
+typedef struct PluginManager {
+    GHashTable *plugins;
+    GList *load_order;
+    GMutex mutex;
+} PluginManager;
 
-PluginManager* plugin_manager_new(const char *plugins_dir);
+PluginManager* plugin_manager_new(void);
 void plugin_manager_free(PluginManager *pm);
-gboolean plugin_manager_load_all(PluginManager *pm);
-gboolean plugin_manager_load(PluginManager *pm, const char *plugin_path);
+void plugin_manager_register(PluginManager *pm, Plugin *plugin);
 Plugin* plugin_manager_get_for_input(PluginManager *pm, const char *input);
 GList* plugin_manager_list(PluginManager *pm);
+void plugin_manager_enable(PluginManager *pm, const char *name, gboolean enable);
 
+// Registry to allow plugins to register themselves
 typedef struct {
-    void (*register_plugin)(const char *name, 
+    void (*register_plugin)(const char *name,
                             PluginDecodeFunc decode,
                             PluginEncodeFunc encode,
                             PluginDetectFunc detect,
@@ -48,4 +40,4 @@ typedef struct {
 
 extern PluginRegistry *g_plugin_registry;
 
-#endif /* PLUGIN_H */
+#endif
