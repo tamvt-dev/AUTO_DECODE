@@ -1,48 +1,129 @@
-# AUTO_DECODE
-Auto Decoder Pro is a high-performance, extensible C-based application that automatically detects and decodes multiple encoding formats such as Base64, Morse, Hex, Binary, and more via a powerful plugin system.
-Auto Decoder Pro is a production-grade decoding and encoding tool written in C, designed for performance, extensibility, and usability. It automatically detects input formats and decodes them instantly, supporting multiple encoding schemes including Base64, Morse code, Hexadecimal, Binary, and more.
+# Auto Decoder Pro Beta 2.0
 
-Built with a modular architecture, the application features a dynamic plugin system that allows developers to easily extend its capabilities by adding new encoding/decoding algorithms without modifying the core.
+Auto Decoder Pro Beta 2.0 is a Windows-focused Qt desktop application for decoding layered or ambiguous encoded text. It combines classic decoders, plugin-based transforms, scoring, retry logic, and a smart multi-stage pipeline to recover the most likely readable result.
 
-The project includes both a graphical user interface (GUI) and a command-line interface (CLI), making it suitable for everyday users, developers, and cybersecurity enthusiasts alike.
+## Status
 
-✨ Key Features
+This repository is currently centered on the Qt desktop build.
 
-🔍 Automatic format detection
+Current beta highlights:
+- Qt Widgets desktop UI
+- Dark and light themes with embedded QSS resources
+- Smart pipeline for multi-layer decoding
+- Built-in support for Base64, Hex, Binary, and Morse
+- Plugin-based transforms such as ROT13, Caesar, Atbash, URL, XOR, and Scramble
+- Inno Setup installer script for the Qt release build
 
-⚡ High-performance decoding with caching (LRU Cache)
+## Smart Pipeline
 
-🔌 Extensible plugin system (dynamic loading)
+Beta 2.0 introduces a staged decoding pipeline instead of a simple one-pass transform search.
 
-🧠 Recursive decoding (multi-layer encoded data)
+Pipeline flow:
 
-🖥️ GUI + CLI support
+```text
+Input
+-> Fast Heuristic Engine
+-> AI Strategy Planner
+-> Multi-Pipeline Executor
+-> Scoring Engine
+-> Auto Retry + Mutation
+-> Best Result
+```
 
-🧵 Multithreaded batch processing
+What that means in practice:
+- The heuristic engine quickly detects structured signals such as binary, hex, base64, morse, and URL-like content.
+- The strategy planner adjusts depth, beam width, and candidate priority before execution.
+- The executor explores multiple decode paths in parallel.
+- The scoring engine ranks candidates using readability plus confidence weighting.
+- Retry and mutation logic tries normalized variants such as trimmed whitespace and normalized hex casing.
+- The pipeline now prefers structured decoding layers before exploratory transforms.
 
-📊 Performance monitoring & statistics
+## Project Layout
 
-🧪 Built-in testing framework
+```text
+auto_decoder/
+├── core/          Core decoding logic, scoring, plugins, pipeline
+├── Qt/            Qt desktop application
+├── installer/     Inno Setup installer files
+├── output/        Installer output folder
+├── portable/      Portable distribution notes/assets
+└── README.md
+```
 
-🧰 Cross-platform support (Linux / Windows)
+## Requirements
 
-🎯 Use Cases
+Windows build environment expected by this project:
+- Qt 6 Widgets
+- MinGW toolchain
+- MSYS2 UCRT64 environment
+- GLib 2.x
 
-Decode unknown encoded strings
-Reverse multi-layer encoding (CTF / scurity challenges)
+The `.pro` file is currently configured around the local MSYS2 UCRT64 layout.
 
-Analyze encoded data quickly
+## Build
 
-Build custom decoding plugins
+### Qt Desktop App
 
-Learning systems programming in C
+From the `Qt` directory:
 
-🧠 Target Audience
+```bat
+qmake auto_decoder_qt.pro
+mingw32-make release
+```
 
-Developers
+Expected output:
 
-Reverse engineers
+```text
+Qt\release\auto_decoder_qt.exe
+```
 
-Cybersecurity learners (CTF players)
+## Installer
 
-Anyone working with encoded data
+The installer script for the Qt build is:
+
+```text
+installer\setup.iss
+```
+
+It is configured to package:
+- `Qt\release\auto_decoder_qt.exe`
+- Qt runtime DLLs from `Qt\release`
+- Qt plugin folders such as `platforms`, `styles`, `imageformats`, and related runtime directories
+- application icons from `Qt\icons`
+
+Default installer output:
+
+```text
+output\AutoDecoderPro_Qt_Setup.exe
+```
+
+To build the installer, open `installer\setup.iss` in Inno Setup Compiler and compile it after the Qt release build is ready.
+
+## Usage
+
+Launch the Qt app, then use one of the tabs:
+- `Decode`: direct decoding with optional format selection
+- `Encode`: direct encoding
+- `Pipeline`: layered decode search using the smart pipeline
+- `Settings`: theme and behavior preferences
+- `History`: recall previous operations
+
+The pipeline view is the main Beta 2.0 feature. It shows:
+- final score
+- selected route
+- best decoded result
+
+## Notes For Beta 2.0
+
+- This beta is optimized for nested and mixed encoded strings.
+- Pipeline behavior is heuristic-driven and still evolving.
+- Some routes may still require tuning for highly adversarial or intentionally misleading inputs.
+- The current repository state is focused on the Qt application rather than a polished CLI release.
+
+## License
+
+This project includes an MIT license in the repository root:
+
+```text
+LICENSE
+```
