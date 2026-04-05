@@ -71,7 +71,7 @@ The pipeline:
 ```text
 Input
 -> Fast Heuristic Engine
--> AI Strategy Planner
+-> Strategy Engine
 -> Multi-Pipeline Executor
 -> Scoring Engine
 -> Auto Retry + Mutation
