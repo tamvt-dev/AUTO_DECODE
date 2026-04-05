@@ -1,3 +1,4 @@
+debug/HyperDecode_resource_res.o
 debug/core.o
 debug/decoder.o
 debug/encoder.o
@@ -18,6 +19,7 @@ debug/url_plugin.o
 debug/xor_plugin.o
 debug/main.o
 debug/mainwindow.o
+debug/console_manager.o
 debug/decoder_engine.o
 debug/history_manager.o
 debug/history_tab.o

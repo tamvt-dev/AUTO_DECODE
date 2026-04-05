@@ -4,6 +4,9 @@
         <file>style/style.qss</file>
         <file>style/dark.qss</file>
         <file>style/light.qss</file>
+        <file>icons/app.ico</file>
         <file>icons/app.png</file>
+        <file alias="branding/hyperdecode-mark.svg">../docs/branding/hyperdecode-mark.svg</file>
+        <file alias="branding/hyperdecode-logo.svg">../docs/branding/hyperdecode-logo.svg</file>
     </qresource>
 </RCC>

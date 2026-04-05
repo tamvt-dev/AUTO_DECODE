@@ -85,6 +85,19 @@ QWidget[class="container"] {
     padding: 12px;
 }
 
+QWidget[class="notificationToast"] {
+    border-radius: 8px;
+    border-width: 1px;
+    border-style: solid;
+    padding: 0px;
+}
+
+QLabel[class="notificationLabel"] {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 0px;
+}
+
 QFrame[frameShape="6"] {
     border-radius: 4px;
 }

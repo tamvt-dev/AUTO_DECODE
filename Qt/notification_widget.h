@@ -35,7 +35,6 @@ private slots:
 private:
     void setupUi();
     void applyStyles();
-    QColor getColorForType(NotificationType type) const;
     QString getIconForType(NotificationType type) const;
 
     QString m_message;

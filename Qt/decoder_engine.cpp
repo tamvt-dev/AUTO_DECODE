@@ -188,11 +188,15 @@ DecoderEngine::PipelineResult DecoderEngine::runPipeline(const QString &input, i
         Candidate *best = (Candidate*)candidates->data;
         result.output = bufferToString(best->buf);
         result.score = best->score;
+
         QString steps;
         for (GList *s = best->steps; s; s = s->next) {
-            if (!steps.isEmpty()) steps += " → ";
+            if (!steps.isEmpty()) {
+                steps += " -> ";
+            }
             steps += reinterpret_cast<const char*>(s->data);
         }
+
         result.steps =
             "Input -> Fast Heuristic Engine -> AI Strategy Planner -> "
             "Multi-Pipeline Executor -> Scoring Engine -> Auto Retry + Mutation -> Best Result"
@@ -201,7 +205,10 @@ DecoderEngine::PipelineResult DecoderEngine::runPipeline(const QString &input, i
     } else {
         result.success = false;
     }
-    if (candidates) candidate_list_free(candidates);
+
+    if (candidates) {
+        candidate_list_free(candidates);
+    }
     return result;
 }
 

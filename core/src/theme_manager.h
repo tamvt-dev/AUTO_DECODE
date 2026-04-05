@@ -4,7 +4,8 @@
 
 typedef enum {
     THEME_DARK,
-    THEME_LIGHT
+    THEME_LIGHT,
+    THEME_SYSTEM
 } ThemeType;
 
 void theme_manager_init(void);

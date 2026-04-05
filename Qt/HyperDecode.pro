@@ -1,9 +1,9 @@
 TEMPLATE = app
-TARGET = auto_decoder_qt
+TARGET = HyperDecode
 QT += core widgets gui
 CONFIG += c++11 console
 
-# 🔥 Quan trọng: ép dùng MinGW (tránh mismatch)
+# Force MinGW to avoid toolchain mismatch.
 QMAKE_CC = gcc
 QMAKE_CXX = g++
 
@@ -40,6 +40,7 @@ SOURCES += \
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    console_manager.cpp \
     decoder_engine.cpp \
     history_manager.cpp \
     history_tab.cpp \
@@ -48,17 +49,19 @@ SOURCES += \
 
 HEADERS += \
     mainwindow.h \
+    console_manager.h \
     history_manager.h \
     history_tab.h \
     notification_widget.h \
     notification_manager.h
 
 RESOURCES += resources.qrc
+RC_ICONS = icons/app.ico
 
-# 🔥 FIX warning cast GLib
+# Silence GLib function-pointer cast warnings on MinGW.
 QMAKE_CFLAGS += -Wno-cast-function-type
 
-# 🔥 QUAN TRỌNG: link GLib đúng cách
+# Link GLib from the local MSYS2 UCRT64 environment.
 LIBS += -LC:/msys64/ucrt64/lib -lglib-2.0 -lintl -liconv
 
 # Debug / Release

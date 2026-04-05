@@ -53,6 +53,8 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         "clearCache",
         "toggleTheme",
         "dark",
+        "toggleConsole",
+        "visible",
         "openFile",
         "saveFile",
         "showAbout",
@@ -86,15 +88,19 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         QtMocHelpers::SlotData<void(bool)>(12, 2, QMC::AccessPrivate, QMetaType::Void, {{
             { QMetaType::Bool, 13 },
         }}),
+        // Slot 'toggleConsole'
+        QtMocHelpers::SlotData<void(bool)>(14, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::Bool, 15 },
+        }}),
         // Slot 'openFile'
-        QtMocHelpers::SlotData<void()>(14, 2, QMC::AccessPrivate, QMetaType::Void),
-        // Slot 'saveFile'
-        QtMocHelpers::SlotData<void()>(15, 2, QMC::AccessPrivate, QMetaType::Void),
-        // Slot 'showAbout'
         QtMocHelpers::SlotData<void()>(16, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'saveFile'
+        QtMocHelpers::SlotData<void()>(17, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'showAbout'
+        QtMocHelpers::SlotData<void()>(18, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onHistoryItemSelected'
-        QtMocHelpers::SlotData<void(const QString &, const QString &)>(17, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { QMetaType::QString, 18 }, { QMetaType::QString, 19 },
+        QtMocHelpers::SlotData<void(const QString &, const QString &)>(19, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 20 }, { QMetaType::QString, 21 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
@@ -130,10 +136,11 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 8: _t->refreshFormats(); break;
         case 9: _t->clearCache(); break;
         case 10: _t->toggleTheme((*reinterpret_cast<std::add_pointer_t<bool>>(_a[1]))); break;
-        case 11: _t->openFile(); break;
-        case 12: _t->saveFile(); break;
-        case 13: _t->showAbout(); break;
-        case 14: _t->onHistoryItemSelected((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
+        case 11: _t->toggleConsole((*reinterpret_cast<std::add_pointer_t<bool>>(_a[1]))); break;
+        case 12: _t->openFile(); break;
+        case 13: _t->saveFile(); break;
+        case 14: _t->showAbout(); break;
+        case 15: _t->onHistoryItemSelected((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
         default: ;
         }
     }
@@ -158,14 +165,14 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 15)
+        if (_id < 16)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 15;
+        _id -= 16;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 15)
+        if (_id < 16)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 15;
+        _id -= 16;
     }
     return _id;
 }

@@ -10,6 +10,7 @@
 #include <QTabWidget>
 #include <QStatusBar>
 #include <QCloseEvent>
+#include <QTimer>
 #include "decoder_engine.h"
 #include "history_manager.h"
 #include "history_tab.h"
@@ -41,6 +42,7 @@ private slots:
     void refreshFormats();
     void clearCache();
     void toggleTheme(bool dark);
+    void toggleConsole(bool visible);
     void openFile();
     void saveFile();
     void showAbout();
@@ -48,6 +50,8 @@ private slots:
 
 private:
     void setupUi();
+    QString loadStylesheetFromResource(const QString &resourcePath) const;
+    void preloadThemes();
     void applyTheme(bool dark);
     void updateStatus(const QString &message, int timeout = 2000);
     void loadPreferences();
@@ -71,6 +75,7 @@ private:
     QCheckBox *darkThemeCheck;
     QCheckBox *autoDecodeCheck;
     QCheckBox *notificationsCheck;
+    QCheckBox *showConsoleCheck;
 
     QStatusBar *statusBar;
 
@@ -82,6 +87,8 @@ private:
     bool autoDecode;
     bool isDarkTheme;
     bool notificationsEnabled;
+    QString darkStylesheet;
+    QString lightStylesheet;
 };
 
 #endif // MAINWINDOW_H

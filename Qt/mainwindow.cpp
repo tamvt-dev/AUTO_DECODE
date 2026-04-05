@@ -14,6 +14,10 @@
 #include <QFrame>
 #include <QFontDatabase>
 #include <QSettings>
+#include <QSignalBlocker>
+#include <QPixmap>
+#include <Qt>
+#include "console_manager.h"
 #include "history_manager.h"
 #include "history_tab.h"
 
@@ -26,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent)
     , notificationsEnabled(true)
 {
     setupUi();
+    preloadThemes();
 
     // Initialize notification manager
     notificationManager.setParentWidget(this);
@@ -62,6 +67,7 @@ MainWindow::MainWindow(QWidget *parent)
         savePreferences();
         updateStatus(checked ? "Notifications enabled" : "Notifications disabled");
     });
+    connect(showConsoleCheck, &QCheckBox::toggled, this, &MainWindow::toggleConsole);
     connect(historyTab, &HistoryTab::itemSelected, this, &MainWindow::onHistoryItemSelected);
 }
 
@@ -90,12 +96,31 @@ void MainWindow::setupUi()
     tabs->setDocumentMode(true);
     tabs->setTabPosition(QTabWidget::North);
 
-    QLabel *titleLabel = new QLabel("AUTO DECODER");
+    QHBoxLayout *headerLayout = new QHBoxLayout;
+    headerLayout->setSpacing(14);
+
+    QLabel *logoLabel = new QLabel;
+    logoLabel->setProperty("class", "appLogo");
+    QPixmap logoPixmap(":/branding/hyperdecode-mark.svg");
+    logoLabel->setPixmap(logoPixmap.scaled(54, 54, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    logoLabel->setFixedSize(54, 54);
+    logoLabel->setAlignment(Qt::AlignCenter);
+
+    QVBoxLayout *titleLayout = new QVBoxLayout;
+    titleLayout->setSpacing(4);
+    titleLayout->setContentsMargins(0, 0, 0, 0);
+
+    QLabel *titleLabel = new QLabel("HYPERDECODE");
     titleLabel->setProperty("class", "appTitle");
     QLabel *subtitleLabel = new QLabel("Decode, encode, and inspect transformations in a compact mono workspace.");
     subtitleLabel->setProperty("class", "appSubtitle");
-    mainLayout->addWidget(titleLabel);
-    mainLayout->addWidget(subtitleLabel);
+
+    titleLayout->addWidget(titleLabel);
+    titleLayout->addWidget(subtitleLabel);
+    headerLayout->addWidget(logoLabel, 0, Qt::AlignTop);
+    headerLayout->addLayout(titleLayout, 1);
+
+    mainLayout->addLayout(headerLayout);
 
     // ---------- Decode Tab ----------
     QWidget *decodeTab = new QWidget;
@@ -304,6 +329,16 @@ void MainWindow::setupUi()
     notifLayout->addStretch();
     settingsLayout->addWidget(notifFrame);
 
+    QFrame *consoleFrame = new QFrame;
+    consoleFrame->setFrameShape(QFrame::StyledPanel);
+    consoleFrame->setProperty("class", "card");
+    QHBoxLayout *consoleLayout = new QHBoxLayout(consoleFrame);
+    showConsoleCheck = new QCheckBox("Show command window");
+    showConsoleCheck->setChecked(false);
+    consoleLayout->addWidget(showConsoleCheck);
+    consoleLayout->addStretch();
+    settingsLayout->addWidget(consoleFrame);
+
     QFrame *buttonFrame = new QFrame;
     buttonFrame->setFrameShape(QFrame::StyledPanel);
     buttonFrame->setProperty("class", "card");
@@ -347,41 +382,47 @@ void MainWindow::setupUi()
     setStatusBar(statusBar);
     statusBar->showMessage("Ready", 2000);
 
-    setWindowTitle("Auto Decoder Pro");
+    setWindowTitle("HyperDecode");
     resize(1100, 800);
     setMinimumSize(800, 600);
 }
 
+QString MainWindow::loadStylesheetFromResource(const QString &resourcePath) const
+{
+    QFile file(resourcePath);
+    if (!file.open(QFile::ReadOnly)) {
+        return QString();
+    }
+
+    const QString stylesheet = QString::fromUtf8(file.readAll());
+    file.close();
+    return stylesheet;
+}
+
+void MainWindow::preloadThemes()
+{
+    const QString sharedStylesheet = loadStylesheetFromResource(":/style/style.qss");
+    darkStylesheet = sharedStylesheet + "\n" + loadStylesheetFromResource(":/style/dark.qss");
+    lightStylesheet = sharedStylesheet + "\n" + loadStylesheetFromResource(":/style/light.qss");
+}
+
 void MainWindow::applyTheme(bool dark)
 {
-    QString stylesheet;
-    
-    if (dark) {
-        // Load master stylesheet and dark theme from resources
-        QFile masterFile(":/style/style.qss");
-        QFile darkFile(":/style/dark.qss");
-        
-        if (masterFile.open(QFile::ReadOnly) && darkFile.open(QFile::ReadOnly)) {
-            stylesheet = QString::fromUtf8(masterFile.readAll()) + "\n" + 
-                        QString::fromUtf8(darkFile.readAll());
-            masterFile.close();
-            darkFile.close();
-        }
-    } else {
-        // Load master stylesheet and light theme from resources
-        QFile masterFile(":/style/style.qss");
-        QFile lightFile(":/style/light.qss");
-        
-        if (masterFile.open(QFile::ReadOnly) && lightFile.open(QFile::ReadOnly)) {
-            stylesheet = QString::fromUtf8(masterFile.readAll()) + "\n" + 
-                        QString::fromUtf8(lightFile.readAll());
-            masterFile.close();
-            lightFile.close();
-        }
+    const QString &stylesheet = dark ? darkStylesheet : lightStylesheet;
+    if (stylesheet.isEmpty()) {
+        statusBar->showMessage("Theme stylesheet could not be loaded", 3000);
+        return;
     }
-    
-    qApp->setStyleSheet(stylesheet);
-    updateStatus(dark ? "Dark theme applied" : "Light theme applied");
+
+    if (this->styleSheet() == stylesheet) {
+        return;
+    }
+
+    setUpdatesEnabled(false);
+    setProperty("theme", dark ? "dark" : "light");
+    this->setStyleSheet(stylesheet);
+    setUpdatesEnabled(true);
+    update();
 }
 
 void MainWindow::toggleTheme(bool dark)
@@ -389,6 +430,16 @@ void MainWindow::toggleTheme(bool dark)
     isDarkTheme = dark;
     applyTheme(dark);
     savePreferences();
+    statusBar->showMessage(dark ? "Dark theme applied" : "Light theme applied", 2000);
+}
+
+void MainWindow::toggleConsole(bool visible)
+{
+    ConsoleManager::setVisible(visible);
+    savePreferences();
+    updateStatus(visible
+        ? "Command window shown. Logs continue in lastlog.txt"
+        : "Command window hidden. Logs continue in lastlog.txt");
 }
 
 void MainWindow::updateStatus(const QString &message, int timeout)
@@ -497,7 +548,7 @@ void MainWindow::runPipeline()
         updateStatus(QString("Pipeline finished. Score: %1").arg(result.score, 0, 'f', 3));
 
         // Record in history
-        HistoryManager::instance().addEntry("pipeline", result.steps, input, result.output,
+        HistoryManager::instance().addEntry("pipeline", result.steps.simplified(), input, result.output,
                                             0.0, false);
     } else {
         pipelineOutput->setPlainText("Pipeline found nothing");
@@ -602,13 +653,19 @@ void MainWindow::saveFile()
 
 void MainWindow::showAbout()
 {
-    QMessageBox::about(this, "About Auto Decoder Pro",
-        QString("<b>Auto Decoder Pro</b><br/>"
-                "Version 2.0.0<br/><br/>"
-                "A professional encoding/decoding tool with plugin support.<br/>"
-                "Supports: Base64, Hex, Binary, Morse, ROT13, URL, Atbash, Caesar, XOR, Scramble.<br/><br/>"
-                "Built with Qt and GLib.<br/>"
-                "© 2024 Auto Decoder Team"));
+    QMessageBox about(this);
+    about.setWindowTitle("About HyperDecode");
+    about.setTextFormat(Qt::RichText);
+
+    QPixmap logoPixmap(":/branding/hyperdecode-mark.svg");
+    about.setIconPixmap(logoPixmap.scaled(72, 72, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    about.setText(QString("<b>HyperDecode</b><br/>"
+                          "Version 2.0.0<br/><br/>"
+                          "A professional encoding/decoding tool with plugin support.<br/>"
+                          "Supports: Base64, Hex, Binary, Morse, ROT13, URL, Atbash, Caesar, XOR, Scramble.<br/><br/>"
+                          "Built with Qt and GLib.<br/>"
+                          "(C) 2026 HyperDecode Team"));
+    about.exec();
 }
 
 void MainWindow::onHistoryItemSelected(const QString &operation, const QString &input)
@@ -627,23 +684,33 @@ void MainWindow::onHistoryItemSelected(const QString &operation, const QString &
 
 void MainWindow::loadPreferences()
 {
-    QSettings settings("AutoDecoderPro", "AutoDecoderPro");
+    QSettings settings("HyperDecode", "HyperDecode");
 
     notificationsEnabled = settings.value("notifications_enabled", true).toBool();
     isDarkTheme = settings.value("dark_theme", true).toBool();
     autoDecode = settings.value("auto_decode", false).toBool();
+    bool showConsole = settings.value("show_console", false).toBool();
 
     // Update UI to match loaded preferences
+    QSignalBlocker notifBlocker(notificationsCheck);
+    QSignalBlocker themeBlocker(darkThemeCheck);
+    QSignalBlocker autoBlocker(autoDecodeCheck);
+    QSignalBlocker consoleBlocker(showConsoleCheck);
+
     notificationsCheck->setChecked(notificationsEnabled);
     darkThemeCheck->setChecked(isDarkTheme);
     autoDecodeCheck->setChecked(autoDecode);
+    showConsoleCheck->setChecked(showConsole);
+    ConsoleManager::setVisible(showConsole);
 }
 
 void MainWindow::savePreferences()
 {
-    QSettings settings("AutoDecoderPro", "AutoDecoderPro");
+    QSettings settings("HyperDecode", "HyperDecode");
 
     settings.setValue("notifications_enabled", notificationsEnabled);
     settings.setValue("dark_theme", isDarkTheme);
     settings.setValue("auto_decode", autoDecode);
+    settings.setValue("show_console", showConsoleCheck->isChecked());
 }
+

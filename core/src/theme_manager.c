@@ -7,18 +7,26 @@ static ThemeType current_theme = THEME_DARK;
 static GtkCssProvider *css_provider = NULL;
 static char *config_path = NULL;
 
+static ThemeType theme_manager_resolve(ThemeType theme) {
+    if (theme == THEME_SYSTEM) {
+        return THEME_DARK;
+    }
+    return theme;
+}
+
 void theme_manager_init(void) {
-    char *config_dir = g_build_filename(g_get_user_config_dir(), "auto_decoder", NULL);
+    char *config_dir = g_build_filename(g_get_user_config_dir(), "hyperdecode", NULL);
     g_mkdir_with_parents(config_dir, 0755);
     g_free(config_dir);
     
-    config_path = g_build_filename(g_get_user_config_dir(), "auto_decoder", "theme.conf", NULL);
+    config_path = g_build_filename(g_get_user_config_dir(), "hyperdecode", "theme.conf", NULL);
     theme_manager_load();
     log_info("Theme manager initialized");
 }
 
 void theme_manager_apply(void *widget, ThemeType theme) {
     current_theme = theme;
+    ThemeType resolved_theme = theme_manager_resolve(theme);
     
     if (css_provider) {
         gtk_style_context_remove_provider_for_screen(gdk_screen_get_default(), GTK_STYLE_PROVIDER(css_provider));
@@ -27,91 +35,115 @@ void theme_manager_apply(void *widget, ThemeType theme) {
     css_provider = gtk_css_provider_new();
     
     const char *css_data;
-    if (theme == THEME_LIGHT) {
+    if (resolved_theme == THEME_LIGHT) {
         css_data =
             "window, .window, .background {\n"
-            "    background-color: #f5f5f5;\n"
+            "    background-color: #F9F9F9;\n"
             "}\n"
             "button {\n"
-            "    background-color: #ffffff;\n"
-            "    color: #1e1e2e;\n"
-            "    border: 1px solid #e0e0e0;\n"
-            "    border-radius: 6px;\n"
+            "    background-color: #E8E8E8;\n"
+            "    color: #0A0E27;\n"
+            "    border: 1px solid #D0D0D0;\n"
+            "    border-radius: 4px;\n"
             "    padding: 6px 12px;\n"
             "}\n"
             "button:hover {\n"
-            "    background-color: #f0f0f0;\n"
+            "    background-color: #DCDCDC;\n"
+            "    border-color: #006A9A;\n"
+            "    color: #006A9A;\n"
+            "}\n"
+            "button:checked, button:active {\n"
+            "    background-color: #1A7D05;\n"
+            "    color: #FFFFFF;\n"
+            "    border-color: #1A7D05;\n"
             "}\n"
             "entry {\n"
             "    background-color: #ffffff;\n"
-            "    color: #1e1e2e;\n"
-            "    border: 1px solid #e0e0e0;\n"
-            "    border-radius: 6px;\n"
+            "    color: #0A0E27;\n"
+            "    border: 1px solid #D0D0D0;\n"
+            "    border-radius: 4px;\n"
             "    padding: 6px;\n"
+            "}\n"
+            "entry:focus {\n"
+            "    border-color: #1A7D05;\n"
             "}\n"
             "textview {\n"
             "    background-color: #ffffff;\n"
             "}\n"
             "textview text {\n"
             "    background-color: #ffffff;\n"
-            "    color: #1e1e2e;\n"
+            "    color: #0A0E27;\n"
             "}\n"
             "label {\n"
-            "    color: #1e1e2e;\n"
+            "    color: #0A0E27;\n"
             "}\n"
             "notebook tab {\n"
-            "    background-color: #e0e0e0;\n"
+            "    background-color: #E8E8E8;\n"
+            "    color: #555555;\n"
             "    padding: 6px 12px;\n"
             "}\n"
             "notebook tab:checked {\n"
             "    background-color: #ffffff;\n"
+            "    color: #1A7D05;\n"
             "}\n"
             "statusbar {\n"
-            "    background-color: #e0e0e0;\n"
-            "    color: #1e1e2e;\n"
+            "    background-color: #FFFFFF;\n"
+            "    color: #0A0E27;\n"
             "}";
     } else {
         css_data =
             "window, .window, .background {\n"
-            "    background-color: #1e1e2e;\n"
+            "    background-color: #0A0E27;\n"
             "}\n"
             "button {\n"
-            "    background-color: #313244;\n"
-            "    color: #cdd6f4;\n"
-            "    border: none;\n"
-            "    border-radius: 6px;\n"
+            "    background-color: #252D4A;\n"
+            "    color: #E7E5E4;\n"
+            "    border: 1px solid #303850;\n"
+            "    border-radius: 4px;\n"
             "    padding: 6px 12px;\n"
             "}\n"
             "button:hover {\n"
-            "    background-color: #45475a;\n"
+            "    background-color: #303850;\n"
+            "    border-color: #00A6F4;\n"
+            "    color: #00A6F4;\n"
+            "}\n"
+            "button:checked, button:active {\n"
+            "    background-color: #37F712;\n"
+            "    color: #0A0E27;\n"
+            "    border-color: #37F712;\n"
             "}\n"
             "entry {\n"
-            "    background-color: #11111b;\n"
-            "    color: #cdd6f4;\n"
-            "    border: 1px solid #313244;\n"
-            "    border-radius: 6px;\n"
+            "    background-color: #10162F;\n"
+            "    color: #E7E5E4;\n"
+            "    border: 1px solid #252D4A;\n"
+            "    border-radius: 4px;\n"
             "    padding: 6px;\n"
             "}\n"
+            "entry:focus {\n"
+            "    border-color: #37F712;\n"
+            "}\n"
             "textview {\n"
-            "    background-color: #11111b;\n"
+            "    background-color: #10162F;\n"
             "}\n"
             "textview text {\n"
-            "    background-color: #11111b;\n"
-            "    color: #cdd6f4;\n"
+            "    background-color: #10162F;\n"
+            "    color: #E7E5E4;\n"
             "}\n"
             "label {\n"
-            "    color: #cdd6f4;\n"
+            "    color: #E7E5E4;\n"
             "}\n"
             "notebook tab {\n"
-            "    background-color: #313244;\n"
+            "    background-color: #141933;\n"
+            "    color: #A99F9B;\n"
             "    padding: 6px 12px;\n"
             "}\n"
             "notebook tab:checked {\n"
-            "    background-color: #45475a;\n"
+            "    background-color: #0A0E27;\n"
+            "    color: #37F712;\n"
             "}\n"
             "statusbar {\n"
-            "    background-color: #181825;\n"
-            "    color: #cdd6f4;\n"
+            "    background-color: #141933;\n"
+            "    color: #E7E5E4;\n"
             "}";
     }
     
@@ -130,7 +162,7 @@ void theme_manager_apply(void *widget, ThemeType theme) {
             GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     }
     
-    log_info("Theme applied: %s", theme == THEME_DARK ? "Dark" : "Light");
+    log_info("Theme applied: %s", resolved_theme == THEME_DARK ? "Dark" : "Light");
     
     if (widget && GTK_IS_WIDGET(widget)) {
         gtk_widget_queue_draw(widget);
@@ -169,6 +201,11 @@ void theme_manager_save(void) {
     log_info("Theme saved: %d", current_theme);
 }
 
+void theme_manager_save_with_value(ThemeType theme) {
+    current_theme = theme;
+    theme_manager_save();
+}
+
 void theme_manager_load(void) {
     GKeyFile *keyfile = g_key_file_new();
     if (g_key_file_load_from_file(keyfile, config_path, G_KEY_FILE_NONE, NULL)) {
@@ -180,3 +217,4 @@ void theme_manager_load(void) {
     }
     g_key_file_free(keyfile);
 }
+   

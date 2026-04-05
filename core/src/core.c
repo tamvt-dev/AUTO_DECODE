@@ -7,6 +7,7 @@
 #include "../include/constants.h"
 #include "../include/version.h"
 #include "../include/buffer.h"
+#include "../include/score.h"
 #include <string.h>
 
 extern void base64_plugin_init(void);
@@ -29,9 +30,40 @@ typedef struct {
 static CoreContext *g_core = NULL;
 static gsize core_init_once = 0;
 
-// ======================== Buffer-based decode using plugins ========================
+static gboolean looks_structured_binary(const char *input, size_t len) {
+    return input && len > 0 && is_binary(input, len);
+}
+
+static gboolean looks_structured_hex(const char *input, size_t len) {
+    return input && len > 0 && is_hex(input, len);
+}
+
+static gboolean looks_structured_base64(const char *input, size_t len) {
+    return input && len > 0 && is_base64(input, len);
+}
+
+static gboolean looks_structured_morse(const char *input, size_t len) {
+    return input && len > 0 && is_morse(input, len);
+}
+
+static DecodeResult* build_decode_result_from_output(const char *input, const char *format, char *output) {
+    DecodeResult *result = g_new0(DecodeResult, 1);
+    result->input = g_strdup(input);
+    result->format = g_strdup(format);
+    result->output = output ? output : g_strdup("");
+
+    if (output && output[0] != '\0') {
+        result->error_code = ERROR_OK;
+        result->output_size = strlen(output);
+    } else {
+        result->error_code = ERROR_DECODE_FAILED;
+        result->error_message = g_strdup("Decode failed");
+    }
+
+    return result;
+}
+
 static DecodeResult* decode_with_plugins(const char *input) {
-    // Wrap input string in a Buffer
     Buffer in_buf = buffer_new((const unsigned char*)input, strlen(input));
 
     Plugin *plugin = plugin_manager_get_for_input(g_core->plugin_manager, in_buf);
@@ -43,7 +75,9 @@ static DecodeResult* decode_with_plugins(const char *input) {
     Buffer out_buf = plugin->decode_single(in_buf);
     buffer_free(&in_buf);
 
-    if (!out_buf.data) return NULL;
+    if (!out_buf.data) {
+        return NULL;
+    }
 
     DecodeResult *result = g_new0(DecodeResult, 1);
     result->output = g_malloc(out_buf.len + 1);
@@ -58,7 +92,57 @@ static DecodeResult* decode_with_plugins(const char *input) {
     return result;
 }
 
-// ======================== Core initialization ========================
+static DecodeResult* decode_with_best_plugin_candidate(const char *input) {
+    if (!g_core || !g_core->plugin_manager || !input || !*input) {
+        return NULL;
+    }
+
+    Buffer in_buf = buffer_new((const unsigned char*)input, strlen(input));
+    if (!in_buf.data) {
+        return NULL;
+    }
+
+    GList *plugins = plugin_manager_list(g_core->plugin_manager);
+    DecodeResult *best = NULL;
+    double best_score = -1.0;
+
+    for (GList *iter = plugins; iter; iter = iter->next) {
+        Plugin *p = (Plugin*)iter->data;
+        if (!p || !p->enabled || !p->decode_single || !p->detect) {
+            continue;
+        }
+        if (!p->detect(in_buf)) {
+            continue;
+        }
+
+        Buffer out_buf = p->decode_single(in_buf);
+        if (!out_buf.data || out_buf.len == 0) {
+            buffer_free(&out_buf);
+            continue;
+        }
+
+        double readability = score_readability(out_buf.data, out_buf.len);
+        if (readability > best_score) {
+            if (best) {
+                decode_result_free(best);
+            }
+
+            char *output = g_malloc(out_buf.len + 1);
+            memcpy(output, out_buf.data, out_buf.len);
+            output[out_buf.len] = '\0';
+
+            best = build_decode_result_from_output(input, p->name, output);
+            best_score = readability;
+        }
+
+        buffer_free(&out_buf);
+    }
+
+    g_list_free(plugins);
+    buffer_free(&in_buf);
+    return best;
+}
+
 static void core_init_once_func(void) {
     log_info("Initializing Core v%s", APP_VERSION);
 
@@ -71,7 +155,6 @@ static void core_init_once_func(void) {
     g_core->initialized = TRUE;
     log_info("Core initialized");
 
-    // Register built-in plugins
     base64_plugin_init();
     rot13_plugin_init();
     url_plugin_init();
@@ -92,8 +175,12 @@ gboolean core_init(void) {
 void core_cleanup(void) {
     if (g_core) {
         log_info("Cleaning up core...");
-        if (g_core->cache) lru_cache_free(g_core->cache);
-        if (g_core->plugin_manager) plugin_manager_free(g_core->plugin_manager);
+        if (g_core->cache) {
+            lru_cache_free(g_core->cache);
+        }
+        if (g_core->plugin_manager) {
+            plugin_manager_free(g_core->plugin_manager);
+        }
         g_mutex_clear(&g_core->stats_mutex);
         g_mutex_clear(&g_core->cache_mutex);
         g_free(g_core);
@@ -102,39 +189,31 @@ void core_cleanup(void) {
     }
 }
 
-// ======================== Built-in decoders (string-based) ========================
 static DecodeResult* decode_builtin(const char *input) {
-    DecodeResult *result = g_new0(DecodeResult, 1);
-    result->input = g_strdup(input);
     size_t len = strlen(input);
 
-    if (is_morse(input, len)) {
-        result->output = decode_morse(input);
-        result->format = g_strdup("Morse");
-    } else if (is_base64(input, len)) {
-        result->output = decode_base64(input);
-        result->format = g_strdup("Base64");
-    } else if (is_hex(input, len)) {
-        result->output = decode_hex(input);
-        result->format = g_strdup("Hex");
-    } else if (is_binary(input, len)) {
-        result->output = decode_binary(input);
-        result->format = g_strdup("Binary");
-    } else {
-        result->error_code = ERROR_UNKNOWN_FORMAT;
-        result->error_message = g_strdup("Cannot detect format");
-        result->output = g_strdup("");
-        result->format = g_strdup("Unknown");
+    if (looks_structured_binary(input, len)) {
+        return build_decode_result_from_output(input, "Binary", decode_binary(input));
+    }
+    if (looks_structured_hex(input, len)) {
+        return build_decode_result_from_output(input, "Hex", decode_hex(input));
+    }
+    if (looks_structured_morse(input, len)) {
+        return build_decode_result_from_output(input, "Morse", decode_morse(input));
+    }
+    if (looks_structured_base64(input, len)) {
+        return build_decode_result_from_output(input, "Base64", decode_base64(input));
     }
 
-    if (result->output && result->error_code == ERROR_OK) {
-        result->error_code = ERROR_OK;
-        result->output_size = strlen(result->output);
-    }
+    DecodeResult *result = g_new0(DecodeResult, 1);
+    result->input = g_strdup(input);
+    result->error_code = ERROR_UNKNOWN_FORMAT;
+    result->error_message = g_strdup("Cannot detect format");
+    result->output = g_strdup("");
+    result->format = g_strdup("Unknown");
     return result;
 }
 
-// ======================== Main decode ========================
 DecodeResult* core_decode(const char *input) {
     if (!core_init()) {
         DecodeResult *result = g_new0(DecodeResult, 1);
@@ -152,7 +231,6 @@ DecodeResult* core_decode(const char *input) {
 
     GTimer *timer = g_timer_new();
 
-    // Cache check
     g_mutex_lock(&g_core->cache_mutex);
     char *cached = lru_cache_get(g_core->cache, input);
     g_mutex_unlock(&g_core->cache_mutex);
@@ -175,11 +253,22 @@ DecodeResult* core_decode(const char *input) {
         return result;
     }
 
-    // Try plugins first, fallback to built-in
-    DecodeResult *result = decode_with_plugins(input);
-    if (!result || result->error_code != ERROR_OK) {
-        if (result) decode_result_free(result);
+    DecodeResult *result = NULL;
+    const size_t input_len = strlen(input);
+
+    if (looks_structured_binary(input, input_len) ||
+        looks_structured_hex(input, input_len) ||
+        looks_structured_morse(input, input_len) ||
+        looks_structured_base64(input, input_len)) {
         result = decode_builtin(input);
+    } else {
+        result = decode_with_best_plugin_candidate(input);
+        if (!result || result->error_code != ERROR_OK) {
+            if (result) {
+                decode_result_free(result);
+            }
+            result = decode_builtin(input);
+        }
     }
 
     g_timer_stop(timer);
@@ -236,7 +325,7 @@ DecodeResult* core_decode_recursive(const char *input, int max_depth) {
 
         g_free(result->output);
         result->output = g_strdup(next->output);
-        g_string_append_printf(format_chain, " → %s", next->format);
+        g_string_append_printf(format_chain, " -> %s", next->format);
         result->processing_time_ms += next->processing_time_ms;
         result->decode_depth = depth;
 
@@ -253,9 +342,10 @@ DecodeResult* core_decode_recursive(const char *input, int max_depth) {
     return result;
 }
 
-// ======================== Encode ========================
 EncodeResult* core_encode(const char *input, CoreMode mode) {
-    if (!input) return NULL;
+    if (!input) {
+        return NULL;
+    }
 
     EncodeResult *result = g_new0(EncodeResult, 1);
     result->input_size = strlen(input);
@@ -293,7 +383,6 @@ EncodeResult* core_encode(const char *input, CoreMode mode) {
     return result;
 }
 
-// ======================== Cache management ========================
 void core_cache_clear(void) {
     if (g_core && g_core->cache) {
         g_mutex_lock(&g_core->cache_mutex);
@@ -314,7 +403,6 @@ void core_cache_set_max_size(size_t size) {
     }
 }
 
-// ======================== Statistics ========================
 CoreStats core_get_stats(void) {
     CoreStats stats = {0};
     if (g_core) {
@@ -335,7 +423,6 @@ void core_reset_stats(void) {
     }
 }
 
-// ======================== Result cleanup ========================
 void decode_result_free(DecodeResult *result) {
     if (result) {
         g_free(result->output);
@@ -354,7 +441,6 @@ void encode_result_free(EncodeResult *result) {
     }
 }
 
-// ======================== Additional core functions ========================
 PluginManager* core_get_plugin_manager(void) {
     return g_core ? g_core->plugin_manager : NULL;
 }
@@ -415,6 +501,7 @@ DecodeResult* core_decode_with_mode(const char *input, CoreMode mode) {
             result->error_message = g_strdup("Unknown mode");
             result->output = g_strdup("");
             result->format = g_strdup("Unknown");
+            break;
     }
 
     if (result->output && !result->error_code) {

@@ -300,7 +300,7 @@ QPushButton[class="tertiary"] {
 - [ ] Theme toggle button switches themes smoothly
 
 **Dark Theme Testing:**
-1. Run app: `./auto_decoder`
+1. Run app: `./HyperDecode`
 2. Check main buttons are neon green (#37F712)
 3. Hover over buttons → color brightens
 4. Click button → color darkens
@@ -336,7 +336,7 @@ QPushButton[class="tertiary"] {
 ## 📝 File Locations
 
 ```
-auto_decoder/Qt/
+HyperDecode/Qt/
 ├── style/
 │   ├── dark.qss           ← Dark theme (mono design)
 │   ├── light.qss          ← Light theme (mono design adapted)

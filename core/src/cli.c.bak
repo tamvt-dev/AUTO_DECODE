@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
         {NULL}
     };
     
-    context = g_option_context_new("[INPUT] - Auto Decoder Pro CLI");
+    context = g_option_context_new("[INPUT] - HyperDecode CLI");
     g_option_context_add_main_entries(context, entries, NULL);
     
     if (!g_option_context_parse(context, &argc, &argv, &error)) {
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
     }
     
     if (help || argc < 2) {
-        printf("Auto Decoder Pro v%s - Professional Encoding/Decoding Tool\n\n", APP_VERSION);
+        printf("HyperDecode v%s - Professional Encoding/Decoding Tool\n\n", APP_VERSION);
         printf("Usage: %s [OPTIONS] [INPUT]\n\n", argv[0]);
         printf("Options:\n");
         printf("  -v, --version     Show version\n");

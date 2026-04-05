@@ -23,7 +23,7 @@ void HistoryManager::addEntry(const QString &operation, const QString &format,
     HistoryEntry entry;
     entry.timestamp = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
     entry.operation = operation;
-    entry.format = format;
+    entry.format = format.simplified();
     entry.input = input;
     entry.output = output;
     entry.processingTimeMs = processingTimeMs;
@@ -162,7 +162,7 @@ HistoryManager::HistoryEntry HistoryManager::jsonToEntry(const QJsonObject &obj)
     HistoryEntry entry;
     entry.timestamp = obj["timestamp"].toString();
     entry.operation = obj["operation"].toString();
-    entry.format = obj["format"].toString();
+    entry.format = obj["format"].toString().simplified();
     entry.input = obj["input"].toString();
     entry.output = obj["output"].toString();
     entry.processingTimeMs = obj["processing_time_ms"].toDouble();

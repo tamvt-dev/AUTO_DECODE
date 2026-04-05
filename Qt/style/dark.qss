@@ -345,3 +345,27 @@ QMessageBox {
 QMessageBox QLabel {
     color: #E7E5E4;
 }
+
+QWidget[class="notificationToast"][tone="info"] {
+    background-color: #141933;
+    border-color: #00A6F4;
+}
+
+QWidget[class="notificationToast"][tone="success"] {
+    background-color: #102218;
+    border-color: #00A63D;
+}
+
+QWidget[class="notificationToast"][tone="warning"] {
+    background-color: #261B08;
+    border-color: #FE9900;
+}
+
+QWidget[class="notificationToast"][tone="error"] {
+    background-color: #2A1119;
+    border-color: #FF2157;
+}
+
+QLabel[class="notificationLabel"] {
+    color: #E7E5E4;
+}

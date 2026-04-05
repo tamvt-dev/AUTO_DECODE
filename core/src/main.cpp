@@ -285,7 +285,7 @@ static void render_ui() {
     }
 
     // Main window with a simple tab bar
-    if (ImGui::Begin("Auto Decoder Pro")) {
+    if (ImGui::Begin("HyperDecode")) {
         if (ImGui::BeginTabBar("MainTabBar")) {
             // Decode tab
             if (ImGui::BeginTabItem("Decode")) {
@@ -460,7 +460,7 @@ int main(int argc, char** argv) {
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
     SDL_Window* window = SDL_CreateWindow(
-        "Auto Decoder Pro",
+        "HyperDecode",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         1280, 720,
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE

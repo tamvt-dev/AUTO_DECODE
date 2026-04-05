@@ -15,6 +15,7 @@ void theme_manager_apply(void *widget, ThemeType theme);
 void theme_manager_toggle(void *widget);
 ThemeType theme_manager_get_current(void);
 void theme_manager_save(void);
+void theme_manager_save_with_value(ThemeType theme);
 void theme_manager_load(void);
 
 #ifdef __cplusplus

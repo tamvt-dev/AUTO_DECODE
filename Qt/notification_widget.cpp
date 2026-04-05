@@ -47,8 +47,16 @@ void NotificationWidget::setupUi()
 
 void NotificationWidget::applyStyles()
 {
-    QColor bgColor = getColorForType(m_type);
-    QString styleSheet = QString(
+    QColor bgColor;
+    switch (m_type) {
+        case Success: bgColor = QColor(46, 204, 113); break;
+        case Error:   bgColor = QColor(231, 76, 60); break;
+        case Warning: bgColor = QColor(243, 156, 18); break;
+        case Info:
+        default:      bgColor = QColor(52, 152, 219); break;
+    }
+
+    const QString styleSheet = QString(
         "QWidget { "
         "background-color: %1; "
         "border-radius: 8px; "
@@ -57,17 +65,6 @@ void NotificationWidget::applyStyles()
     ).arg(bgColor.name()).arg(bgColor.darker(120).name());
 
     setStyleSheet(styleSheet);
-}
-
-QColor NotificationWidget::getColorForType(NotificationType type) const
-{
-    switch (type) {
-        case Success: return QColor(46, 204, 113);    // Green #2ecc71
-        case Error:   return QColor(231, 76, 60);     // Red #e74c3c
-        case Warning: return QColor(243, 156, 18);    // Yellow #f39c12
-        case Info:
-        default:      return QColor(52, 152, 219);    // Blue #3498db
-    }
 }
 
 QString NotificationWidget::getIconForType(NotificationType type) const
@@ -95,6 +92,7 @@ void NotificationWidget::show()
     }
 
     QWidget::show();
+    raise();
 
     // Animate slide in from right
     if (parentWidget()) {

@@ -1,17 +1,32 @@
-; Auto Decoder Pro (Qt) - Inno Setup Script
+; HyperDecode (Qt) - Inno Setup Script
 
 [Setup]
-AppName=Auto Decoder Pro
+AppName=HyperDecode
 AppVersion=2.0.0
-DefaultDirName={autopf}\Auto Decoder Pro
-DefaultGroupName=Auto Decoder Pro
+AppPublisher=HyperDecode Team
+DefaultDirName={autopf}\HyperDecode
+DefaultGroupName=HyperDecode
 OutputDir=..\output
-OutputBaseFilename=AutoDecoderPro_Qt_Setup
+OutputBaseFilename=HyperDecode_Setup
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=lowest
 SetupIconFile=..\Qt\icons\app.ico
+VersionInfoVersion=2.0.0.0
+VersionInfoCompany=HyperDecode Team
+VersionInfoDescription=HyperDecode Beta 2.0 Qt Desktop Installer
+
+; Optional signing hook.
+; Replace the SignTool command below with your real signtool.exe path, certificate,
+; timestamp server, and password or certificate store settings when ready.
+; Example usage in [Files] or output signing:
+;   SignTool=mysigntool $f
+;
+; SignTool=mysigntool $f
+
+[SignTools]
+; Name: "mysigntool"; Command: """C:\Path\To\signtool.exe"" sign /f ""C:\Path\To\certificate.pfx"" /p ""YOUR_PASSWORD"" /tr ""http://timestamp.digicert.com"" /td sha256 /fd sha256 ""$f"""
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -20,7 +35,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\Qt\release\auto_decoder_qt.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\Qt\release\HyperDecode.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\Qt\release\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\Qt\release\platforms\*"; DestDir: "{app}\platforms"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\Qt\release\styles\*"; DestDir: "{app}\styles"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -37,9 +52,9 @@ Source: "license.rtf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "readme.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\Auto Decoder Pro (Qt)"; Filename: "{app}\auto_decoder_qt.exe"; IconFilename: "{app}\icons\app.ico"
-Name: "{group}\Uninstall Auto Decoder Pro"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\Auto Decoder Pro"; Filename: "{app}\auto_decoder_qt.exe"; IconFilename: "{app}\icons\app.ico"; Tasks: desktopicon
+Name: "{group}\HyperDecode"; Filename: "{app}\HyperDecode.exe"; IconFilename: "{app}\icons\app.ico"
+Name: "{group}\Uninstall HyperDecode"; Filename: "{uninstallexe}"
+Name: "{autodesktop}\HyperDecode"; Filename: "{app}\HyperDecode.exe"; IconFilename: "{app}\icons\app.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\auto_decoder_qt.exe"; Description: "{cm:LaunchProgram,Auto Decoder Pro}"; Flags: postinstall nowait skipifsilent
+Filename: "{app}\HyperDecode.exe"; Description: "{cm:LaunchProgram,HyperDecode}"; Flags: postinstall nowait skipifsilent

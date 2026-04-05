@@ -1,0 +1,320 @@
+[2026-04-04 21:36:07] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 21:36:07] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 21:36:07] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 21:36:07] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 21:36:07] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 21:36:07] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 21:36:07] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 21:36:07] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 21:36:07] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 21:36:07] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 21:40:39] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-04 21:40:39] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-04 21:42:01] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 21:42:01] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 21:42:01] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 21:42:01] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 21:42:01] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 21:42:01] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 21:42:01] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 21:42:01] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 21:42:01] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 21:42:01] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 21:47:37] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 21:47:37] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 21:47:37] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 21:47:37] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 21:47:37] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 21:47:37] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 21:47:37] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 21:47:37] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 21:47:37] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 21:47:37] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 21:47:54] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-04 21:47:54] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-04 21:50:57] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 21:50:57] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 21:50:57] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 21:50:57] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 21:50:57] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 21:50:57] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 21:50:57] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 21:50:57] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 21:50:57] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 21:50:57] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 21:51:26] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-04 21:51:26] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-04 22:00:22] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 22:00:22] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 22:00:22] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 22:00:22] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 22:00:22] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 22:00:22] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 22:00:22] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 22:00:22] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 22:00:22] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 22:00:22] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 22:04:15] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-04 22:04:15] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-04 22:06:32] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 22:06:32] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 22:06:32] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 22:06:32] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 22:06:32] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 22:06:32] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 22:06:32] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 22:06:32] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 22:06:32] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 22:06:32] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 22:06:53] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-04 22:06:53] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-04 22:07:00] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 22:07:00] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 22:07:00] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 22:07:00] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 22:07:00] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 22:07:00] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 22:07:00] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 22:07:00] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 22:07:00] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 22:07:00] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 22:07:06] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-04 22:07:06] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-04 22:15:35] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 22:15:35] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 22:15:35] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 22:15:35] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 22:15:35] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 22:15:35] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 22:15:35] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 22:15:35] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 22:15:35] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 22:15:35] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 22:19:44] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-04 22:19:44] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-04 22:22:26] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 22:22:26] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 22:22:26] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 22:22:26] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 22:22:26] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 22:22:26] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 22:22:26] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 22:22:26] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 22:22:26] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 22:22:26] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 22:24:23] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-04 22:24:23] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-04 22:31:08] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 22:31:08] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 22:31:08] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 22:31:08] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 22:31:08] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 22:31:08] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 22:31:08] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 22:31:08] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 22:31:08] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 22:31:08] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 22:31:56] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-04 22:31:56] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-04 22:35:40] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 22:35:40] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 22:35:40] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 22:35:40] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 22:35:40] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 22:35:40] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 22:35:40] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 22:35:40] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 22:35:40] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 22:35:40] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 22:35:54] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 22:35:54] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 22:35:54] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 22:35:54] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 22:35:54] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 22:35:54] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 22:35:54] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 22:35:54] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 22:35:54] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 22:35:54] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 22:36:02] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-04 22:36:02] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-04 22:36:04] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-04 22:36:04] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-04 22:36:07] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 22:36:07] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 22:36:07] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 22:36:07] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 22:36:07] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 22:36:07] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 22:36:07] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 22:36:07] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 22:36:07] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 22:36:07] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 22:36:15] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-04 22:36:15] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-04 22:36:23] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 22:36:23] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 22:36:23] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 22:36:23] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 22:36:23] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 22:36:23] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 22:36:23] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 22:36:23] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 22:36:23] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 22:36:23] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 22:36:58] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-04 22:36:58] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-04 22:40:27] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-04 22:40:27] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-04 22:40:27] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-04 22:40:27] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-04 22:40:27] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-04 22:40:27] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-04 22:40:27] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-04 22:40:27] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-04 22:40:27] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-04 22:40:27] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-04 22:41:01] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-04 22:41:01] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-05 07:11:31] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-05 07:11:31] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-05 07:11:31] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-05 07:11:31] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-05 07:11:31] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-05 07:11:31] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-05 07:11:31] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-05 07:11:31] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-05 07:11:31] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-05 07:11:31] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-05 07:12:07] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-05 07:12:07] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-05 07:14:40] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-05 07:14:40] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-05 07:14:40] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-05 07:14:40] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-05 07:14:40] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-05 07:14:40] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-05 07:14:40] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-05 07:14:40] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-05 07:14:40] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-05 07:14:40] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-05 07:17:32] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-05 07:17:32] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-05 07:19:01] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-05 07:19:01] [INFO] ../core/src/core.c:63:core_init_once_func - Initializing Core v2.0.0
+[2026-04-05 07:19:01] [INFO] ../core/src/core.c:72:core_init_once_func - Core initialized
+[2026-04-05 07:19:01] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-05 07:19:01] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-05 07:19:01] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-05 07:19:01] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-05 07:19:01] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-05 07:19:01] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-05 07:19:01] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-05 07:46:51] [INFO] ../core/src/core.c:94:core_cleanup - Cleaning up core...
+[2026-04-05 07:46:51] [INFO] ../core/src/core.c:101:core_cleanup - Core cleanup complete
+[2026-04-05 07:48:04] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-05 07:48:04] [INFO] ../core/src/core.c:138:core_init_once_func - Initializing Core v2.0.0
+[2026-04-05 07:48:04] [INFO] ../core/src/core.c:147:core_init_once_func - Core initialized
+[2026-04-05 07:48:04] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-05 07:48:04] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-05 07:48:04] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-05 07:48:04] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-05 07:48:04] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-05 07:48:04] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-05 07:48:04] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-05 07:48:47] [INFO] ../core/src/core.c:169:core_cleanup - Cleaning up core...
+[2026-04-05 07:48:47] [INFO] ../core/src/core.c:176:core_cleanup - Core cleanup complete
+[2026-04-05 07:49:12] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-05 07:49:12] [INFO] ../core/src/core.c:138:core_init_once_func - Initializing Core v2.0.0
+[2026-04-05 07:49:12] [INFO] ../core/src/core.c:147:core_init_once_func - Core initialized
+[2026-04-05 07:49:12] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-05 07:49:12] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-05 07:49:12] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-05 07:49:12] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-05 07:49:12] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-05 07:49:12] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-05 07:49:12] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-05 08:11:41] [INFO] ../core/src/core.c:169:core_cleanup - Cleaning up core...
+[2026-04-05 08:11:41] [INFO] ../core/src/core.c:176:core_cleanup - Core cleanup complete
+[2026-04-05 08:13:27] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-05 08:13:27] [INFO] ../core/src/core.c:138:core_init_once_func - Initializing Core v2.0.0
+[2026-04-05 08:13:27] [INFO] ../core/src/core.c:147:core_init_once_func - Core initialized
+[2026-04-05 08:13:27] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-05 08:13:27] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-05 08:13:27] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-05 08:13:27] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-05 08:13:27] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-05 08:13:27] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-05 08:13:27] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-05 08:18:44] [INFO] ../core/src/core.c:169:core_cleanup - Cleaning up core...
+[2026-04-05 08:18:44] [INFO] ../core/src/core.c:176:core_cleanup - Core cleanup complete
+[2026-04-05 08:32:58] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-05 08:32:58] [INFO] ..\core\src\core.c:147:core_init_once_func - Initializing Core v2.0.0
+[2026-04-05 08:32:58] [INFO] ..\core\src\core.c:156:core_init_once_func - Core initialized
+[2026-04-05 08:32:58] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-05 08:32:58] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-05 08:32:58] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-05 08:32:58] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-05 08:32:58] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-05 08:32:58] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-05 08:32:58] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-05 08:33:08] [INFO] ..\core\src\core.c:177:core_cleanup - Cleaning up core...
+[2026-04-05 08:33:08] [INFO] ..\core\src\core.c:188:core_cleanup - Core cleanup complete
+[2026-04-05 08:38:45] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-05 08:38:45] [INFO] ..\core\src\core.c:147:core_init_once_func - Initializing Core v2.0.0
+[2026-04-05 08:38:45] [INFO] ..\core\src\core.c:156:core_init_once_func - Core initialized
+[2026-04-05 08:38:45] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-05 08:38:45] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-05 08:38:45] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-05 08:38:45] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-05 08:38:45] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-05 08:38:45] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-05 08:38:45] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-05 08:38:48] [INFO] ..\core\src\core.c:177:core_cleanup - Cleaning up core...
+[2026-04-05 08:38:48] [INFO] ..\core\src\core.c:188:core_cleanup - Core cleanup complete
+[2026-04-05 08:41:45] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-05 08:41:45] [INFO] ..\core\src\core.c:147:core_init_once_func - Initializing Core v2.0.0
+[2026-04-05 08:41:45] [INFO] ..\core\src\core.c:156:core_init_once_func - Core initialized
+[2026-04-05 08:41:45] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-05 08:41:45] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-05 08:41:45] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-05 08:41:45] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-05 08:41:45] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-05 08:41:45] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-05 08:41:45] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-05 08:46:03] [INFO] ..\core\src\core.c:177:core_cleanup - Cleaning up core...
+[2026-04-05 08:46:03] [INFO] ..\core\src\core.c:188:core_cleanup - Core cleanup complete
+[2026-04-05 08:46:52] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-05 08:46:52] [INFO] ..\core\src\core.c:147:core_init_once_func - Initializing Core v2.0.0
+[2026-04-05 08:46:52] [INFO] ..\core\src\core.c:156:core_init_once_func - Core initialized
+[2026-04-05 08:46:52] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-05 08:46:52] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-05 08:46:52] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-05 08:46:52] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-05 08:46:52] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-05 08:46:52] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-05 08:46:52] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-05 08:49:12] [INFO] ..\core\src\core.c:177:core_cleanup - Cleaning up core...
+[2026-04-05 08:49:12] [INFO] ..\core\src\core.c:188:core_cleanup - Core cleanup complete
+[2026-04-05 08:49:28] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-05 08:49:28] [INFO] ..\core\src\core.c:147:core_init_once_func - Initializing Core v2.0.0
+[2026-04-05 08:49:28] [INFO] ..\core\src\core.c:156:core_init_once_func - Core initialized
+[2026-04-05 08:49:28] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-05 08:49:28] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-05 08:49:28] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-05 08:49:28] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-05 08:49:28] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-05 08:49:28] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-05 08:49:28] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble
+[2026-04-05 08:50:37] [INFO] ..\core\src\core.c:177:core_cleanup - Cleaning up core...
+[2026-04-05 08:50:37] [INFO] ..\core\src\core.c:188:core_cleanup - Core cleanup complete
+[2026-04-05 08:53:26] [INFO] ../core/src/logging.c:29:log_init - Logging initialized (level: INFO)
+[2026-04-05 08:53:26] [INFO] ..\core\src\core.c:147:core_init_once_func - Initializing Core v2.0.0
+[2026-04-05 08:53:26] [INFO] ..\core\src\core.c:156:core_init_once_func - Core initialized
+[2026-04-05 08:53:26] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Base64
+[2026-04-05 08:53:26] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: ROT13
+[2026-04-05 08:53:26] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: URL
+[2026-04-05 08:53:26] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Atbash
+[2026-04-05 08:53:26] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Caesar
+[2026-04-05 08:53:26] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: XOR
+[2026-04-05 08:53:26] [INFO] ../core/src/plugin.c:43:register_plugin_builtin - Registered built-in plugin: Scramble

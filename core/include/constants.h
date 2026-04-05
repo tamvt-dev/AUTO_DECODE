@@ -26,15 +26,15 @@ extern "C" {
 
 /* Paths */
 #ifdef _WIN32
-    #define CONFIG_DIR ".\\config\\auto_decoder"
-    #define DATA_DIR ".\\data\\auto_decoder"
-    #define CACHE_DIR ".\\cache\\auto_decoder"
+    #define CONFIG_DIR ".\\config\\hyperdecode"
+    #define DATA_DIR ".\\data\\hyperdecode"
+    #define CACHE_DIR ".\\cache\\hyperdecode"
     #define PLUGINS_DIR ".\\plugins"
 #else
-    #define CONFIG_DIR "~/.config/auto_decoder"
-    #define DATA_DIR "~/.local/share/auto_decoder"
-    #define CACHE_DIR "~/.cache/auto_decoder"
-    #define PLUGINS_DIR "/usr/lib/auto_decoder/plugins"
+    #define CONFIG_DIR "~/.config/hyperdecode"
+    #define DATA_DIR "~/.local/share/hyperdecode"
+    #define CACHE_DIR "~/.cache/hyperdecode"
+    #define PLUGINS_DIR "/usr/lib/hyperdecode/plugins"
 #endif
 #ifdef __cplusplus
 }

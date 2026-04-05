@@ -66,6 +66,8 @@ static gboolean should_skip_plugin_for_candidate(const Candidate *cand, const Pl
 static const char* candidate_last_step(const Candidate *cand);
 static gboolean has_structured_artifact(const Buffer *buf);
 static gboolean is_structured_transform(const char *step_name);
+static double printable_ratio(const Buffer *buf);
+static gboolean is_promising_text_candidate(const Buffer *buf);
 
 static gboolean is_base64_like(const Buffer *buf) {
     if (!buf || !buf->data || buf->len < 8) return FALSE;
@@ -137,6 +139,23 @@ static gboolean is_alpha_text(const Buffer *buf) {
         if (isalpha(c)) alpha++;
     }
     return printable > 0 && alpha >= printable / 2;
+}
+
+static double printable_ratio(const Buffer *buf) {
+    if (!buf || !buf->data || buf->len == 0) return 0.0;
+    size_t printable = 0;
+    for (size_t i = 0; i < buf->len; i++) {
+        if (g_ascii_isprint(buf->data[i])) printable++;
+    }
+    return (double)printable / (double)buf->len;
+}
+
+static gboolean is_promising_text_candidate(const Buffer *buf) {
+    if (!buf || !buf->data || buf->len == 0) return FALSE;
+    if (has_structured_artifact(buf)) return FALSE;
+    if (printable_ratio(buf) < 0.92) return FALSE;
+    if (!is_alpha_text(buf)) return FALSE;
+    return score_readability(buf->data, buf->len) >= 0.75;
 }
 
 static int plugin_priority_for_input(Plugin *p, const Buffer *input) {
@@ -280,7 +299,42 @@ static gboolean has_structured_artifact(const Buffer *buf) {
 
 static gboolean should_stop_on_readable_text(const Candidate *cand) {
     if (!cand || !cand->buf.data || cand->buf.len == 0) return FALSE;
+    if (has_structured_artifact(&cand->buf)) return FALSE;
     if (!is_alpha_text(&cand->buf)) return FALSE;
+
+    size_t printable = 0;
+    size_t alpha = 0;
+    size_t vowels = 0;
+    size_t spaces = 0;
+
+    for (size_t i = 0; i < cand->buf.len; i++) {
+        unsigned char c = cand->buf.data[i];
+        if (g_ascii_isprint(c)) printable++;
+        if (g_ascii_isalpha(c)) {
+            alpha++;
+            switch (g_ascii_tolower(c)) {
+                case 'a':
+                case 'e':
+                case 'i':
+                case 'o':
+                case 'u':
+                    vowels++;
+                    break;
+                default:
+                    break;
+            }
+        } else if (g_ascii_isspace(c)) {
+            spaces++;
+        }
+    }
+
+    if (printable == 0) return FALSE;
+    if (alpha >= MAX((size_t)3, printable * 3 / 5) &&
+        (vowels > 0 || spaces > 0) &&
+        printable * 10 >= cand->buf.len * 9) {
+        return TRUE;
+    }
+
     return score_readability(cand->buf.data, cand->buf.len) >= 1.05;
 }
 
@@ -293,6 +347,7 @@ static gboolean should_skip_plugin_for_candidate(const Candidate *cand, const Pl
     if (g_strcmp0(last_step, plugin->name) == 0) return TRUE;
     if (should_stop_on_readable_text(cand) && is_exploratory_transform(plugin->name)) return TRUE;
     if (structured_artifact && is_exploratory_transform(plugin->name)) return TRUE;
+    if (is_exploratory_transform(plugin->name) && !is_promising_text_candidate(&cand->buf)) return TRUE;
 
     if (depth == 0 && g_strcmp0(last_step, "Input") == 0) {
         if (is_binary_like(&cand->buf)) return TRUE;
@@ -359,6 +414,12 @@ static Candidate* build_decoded_candidate(const Candidate *cand, const char *ste
     Buffer next_buf = buffer_new((const unsigned char*)decoded, strlen(decoded));
     g_free(decoded);
     if (!next_buf.data || buffer_equal(&cand->buf, &next_buf)) {
+        buffer_free(&next_buf);
+        return NULL;
+    }
+    if (!has_structured_artifact(&next_buf) &&
+        printable_ratio(&next_buf) < 0.55 &&
+        !is_promising_text_candidate(&next_buf)) {
         buffer_free(&next_buf);
         return NULL;
     }
