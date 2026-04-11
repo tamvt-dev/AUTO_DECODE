@@ -45,27 +45,45 @@ graph TD
 ```
 
 ### 2. Theoretical Framework
+HyperDecode models de-obfuscation as a traversal through a **State Space**. For each depth $t$, the search pool $S_{t+1}$ is updated by evaluating all potential successors:
+
+$$S_{next} = \text{TopK}_{s' \in \{ f_e(s) \mid s \in S, e \in \text{Edges} \}} \text{Score}(s')$$
+
 - **State Space**: Each intermediate output is treated as a node in the transformation graph.
-- **Transition Function**: Decoders act as edges transforming one state into another (e.g., $f(Base64)$).
-- **Heuristic Function**: The Scoring Engine acts as a **proxy for semantic understanding**, approximating how "meaningful" a result is without requiring full context awareness.
-- **State Deduplication**: Prevents redundant exploration by hashing and caching previously seen states to optimize performance.
+- **Transition Function**: Decoders act as edges transforming $s \xrightarrow{f_e} s'$.
+- **Heuristic Function**: The Scoring Engine acts as a **proxy for semantic understanding**, evaluating Shannon entropy, magic numbers, and character distribution.
+- **Beam Width Control**: Limits exploration to the Top-K candidates at each depth to prevent recursive combinatorial explosion.
+
+---
+
+## 🚀 Quick Look: Interaction Trace
+
+When running with the `--trace` flag, HyperDecode reveals its internal decision-making process:
+
+```text
+[Pipeline] Input: "U0dWc2JHOGdhVzRnU0dWNGNHeHZaR1VnUTNScGJtY2dRaFpYSlV4..."
+   ├── Level 1: Base64 detected (Score: 0.92) -> "SGVsbG8gaW4gSGV4cXZkZGUgQ3Rpbmc..."
+   ├── Level 2: Hex detected    (Score: 0.88) -> "XOR:0x41 decryption sequence..."
+   ├── Level 3: XOR (Key:0x41)  (Score: 0.99) -> "HyperDecode Success! { ... }"
+[Result] Final Match Found in 12ms.
+```
 
 ---
 
 ## ✨ Key Features
 
-- 🧠 **Heuristic Graph Search**: Dynamically explores a transformation DAG using beam search and scoring heuristics.
-- ⚡ **Native Performance**: High-speed C core optimized for massive recursive tasks and low latency.
-- 🔋 **Feather-Light**: Maintains a **<32MB RAM** footprint—ideal for embedded and professional environments.
+- 🧠 **Heuristic Graph Search**: Dynamically explores a transformation DAG using beam search and scoring.
+- ⚡ **Native Performance**: High-speed C core optimized for massive recursive tasks (MSYS2/UCRT64).
+- 🔋 **Feather-Light**: Maintains a **<32MB RAM** footprint—ideal for professional environments.
 - 📋 **Recipe System**: Design, save, and batch-apply custom transformation chains.
-- ⌨️ **Hacker CLI**: Professional terminal interface with interactive path trace and JSON export.
+- ⌨️ **Colorized CLI**: Professional terminal interface with interactive path trace and JSON export.
 
 ---
 
 ## 📊 Performance Benchmark
-*Tested on: Intel i5-7200U / 16GB RAM (Single-threaded mode)*
+*Tested on: Intel i5-7200U / 16GB RAM (Single-threaded)*
 
-| Input Complexity | Obfuscation Layers | Time (Avg) | Confidence |
+| Input Complexity | Obfuscation Layers | Time (Avg) | Success |
 | :--- | :---: | :---: | :---: |
 | Base64 → Hex → XOR | 3 | **12ms** | ✅ High |
 | Double Base64 + Rot13 | 3 | **8ms** | ✅ High |
@@ -75,31 +93,18 @@ graph TD
 
 ## 📦 Installation Guide (CLI)
 
-### Option 1: One-Click Install (Recommended)
-1. Download the latest **HyperDecode-CLI.rar** from the [Releases](https://github.com/tamvt-dev/HyperDecode/releases) section.
-2. Extract the package to your work directory.
-3. Open PowerShell in the project root and run:
+1. Download the latest release from the [Releases](https://github.com/tamvt-dev/HyperDecode/releases).
+2. Run the automated installer:
    ```powershell
    .\install_cli.ps1
    ```
-4. Restart your terminal to apply the PATH changes globally.
-
-### Option 2: Manual PATH Setup
-1. Copy the full path to the `cli/bin` folder.
-2. Add this path to your system's **Environment Variables** (PATH).
-
----
-
-## 🚀 Quick Start
-- **Intelligent Pipeline**: `hyperdecode "EncodedData" --pipeline`
-- **Logic Inspection**: `hyperdecode input.txt --trace`
-- **Automation (JSON)**: `hyperdecode data.bin --json > metadata.json`
+3. Restart your terminal to apply PATH changes globally.
 
 ---
 
 ## 🛤️ Roadmap
-- [ ] **Adaptive Beam Width**: Dynamically adjust search breadth based on entropy and confidence metrics.
-- [ ] **Learned Scoring Model**: Integrate ML-based scoring for research-grade path accuracy.
+- [ ] **ML Scoring Core**: Integrate *Tinygrad* or *ONNX Runtime Core* for research-grade scoring.
+- [ ] **Adaptive Beam Width**: Dynamically adjust search breadth based on data confidence.
 - [ ] **Scripting Plugin**: Lua & Python support for custom transition functions.
 
 ---
