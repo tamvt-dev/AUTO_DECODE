@@ -49,21 +49,26 @@ static GList* xor_decode_multi(Buffer in) {
     XorCandidate all_cands[256];
     int valid_count = 0;
 
-    // Phase 1: Try ALL 256 keys (O(256 * N))
+    // Phase 1: FAST sampling 256 keys without full allocation
+    unsigned char sample[256];
+    size_t sample_len = MIN(in.len, 256);
+    
     for (int key = 0; key < 256; key++) {
-        Buffer result = xor_transform(in, (unsigned char)key);
+        // Create XOR sample in stack memory
+        for (size_t i = 0; i < sample_len; i++) {
+            sample[i] = in.data[i] ^ (unsigned char)key;
+        }
         
-        // Use our high-performance scoring engine to rank candidates
-        // We only sample the first 256 bytes for speed during brute force
-        double score = score_readability(result.data, MIN(result.len, 256));
+        // Fast score check on sample
+        double score = score_readability(sample, sample_len);
         
-        if (score > 0.4) {
+        if (score > 0.45) { // Slightly higher threshold for samples
+            // Phase 2: High-potential key, perform FULL transform and allocation
+            Buffer result = xor_transform(in, (unsigned char)key);
             all_cands[valid_count].buf = result;
             all_cands[valid_count].score = score;
             all_cands[valid_count].key = key;
             valid_count++;
-        } else {
-            buffer_free(&result);
         }
     }
 

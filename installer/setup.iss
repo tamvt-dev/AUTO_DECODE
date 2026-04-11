@@ -2,7 +2,7 @@
 
 [Setup]
 AppName=HyperDecode
-AppVersion=2.0.0
+AppVersion=3.2.0
 AppPublisher=HyperDecode Team
 DefaultDirName={autopf}\HyperDecode
 DefaultGroupName=HyperDecode
@@ -13,9 +13,9 @@ SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=lowest
 SetupIconFile=..\Qt\icons\app.ico
-VersionInfoVersion=2.0.0.0
+VersionInfoVersion=3.2.0.0
 VersionInfoCompany=HyperDecode Team
-VersionInfoDescription=HyperDecode Beta 2.0 Qt Desktop Installer
+VersionInfoDescription=HyperDecode Beta 3.2 Qt Desktop Installer
 
 ; Optional signing hook.
 ; Replace the SignTool command below with your real signtool.exe path, certificate,

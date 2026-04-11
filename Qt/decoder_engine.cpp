@@ -12,16 +12,8 @@
 static QString bufferToString(const Buffer &buf) {
     if (!buf.data || buf.len == 0) return QString();
     
-    // Debug: print hex values
-    qDebug() << "Buffer length:" << buf.len;
-    for (size_t i = 0; i < buf.len && i < 20; i++) {
-        qDebug() << "Byte" << i << ":" << QString::number(buf.data[i], 16);
-    }
-    
-    // Create string directly from buffer as ASCII/Latin1
-    QString result = QString::fromLatin1(reinterpret_cast<const char*>(buf.data), buf.len);
-    qDebug() << "Result string:" << result;
-    return result;
+    // Direct conversion without expensive debug per-byte logging
+    return QString::fromLatin1(reinterpret_cast<const char*>(buf.data), buf.len);
 }
 
 DecoderEngine::RecipeResult DecoderEngine::executeRecipe(const QString &jsonStr, const QString &input)

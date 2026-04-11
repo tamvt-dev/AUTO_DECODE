@@ -19,7 +19,7 @@ static void init_pipeline_pool(void) {
     g_mutex_lock(&g_pool_mutex);
     if (!g_pool_initialized) {
         GError *error = NULL;
-        g_pipeline_pool = g_thread_pool_new(pipeline_executor_worker, NULL, 1, FALSE, &error); // 1 thread max for i5-7200U
+        g_pipeline_pool = g_thread_pool_new(pipeline_executor_worker, NULL, 4, FALSE, &error); // Use 4 threads for parallelism
         if (error) {
             g_error_free(error);
             g_pipeline_pool = NULL;
@@ -211,12 +211,14 @@ static int plugin_priority_for_input(Plugin *p, const Buffer *input) {
     int priority = p->priority * 10;
     if (p->detect && p->detect(*input)) priority += 120;
 
-    // Check if input is pure hex (only 0-9, a-f, A-F)
+    // Check if input is pure binary (0, 1, and space only)
+    gboolean is_pure_binary = is_binary_like(input);
     gboolean is_pure_hex = is_hex_like(input);
     
-    if (g_strcmp0(p->name, "Hex") == 0 && is_pure_hex) priority += 100; // Higher priority for hex
-    if (g_strcmp0(p->name, "Base64") == 0 && is_base64_like(input) && !is_pure_hex) priority += 70;
-    if (g_strcmp0(p->name, "Binary") == 0 && is_binary_like(input)) priority += 70;
+    if (g_strcmp0(p->name, "Binary") == 0 && is_pure_binary) priority += 150; // Massively boost Binary
+    if (g_strcmp0(p->name, "Hex") == 0 && is_pure_hex) priority += 100;
+    if (g_strcmp0(p->name, "Base64") == 0 && is_base64_like(input) && !is_pure_hex && !is_pure_binary) priority += 70;
+    
     if (g_strcmp0(p->name, "Morse") == 0 && is_morse_like(input)) priority += 70;
     if (g_strcmp0(p->name, "URL") == 0 && is_url_like(input)) priority += 60;
     if ((g_strcmp0(p->name, "ROT13") == 0 ||
@@ -579,7 +581,7 @@ static void pipeline_task_free(PipelineTask *task) {
 
 static void pipeline_executor_worker(gpointer data, gpointer user_data) {
     (void)user_data;
-    g_usleep(2500); // 2.5ms sleep to ensure ~10% CPU on 4-thread i5-7200U
+    // Removed artificial sleep delay for massive performance boost
     PipelineTask *task = (PipelineTask*)data;
     const Candidate *cand = task->cand;
     Plugin *p = task->plugin;
@@ -616,7 +618,16 @@ static void pipeline_executor_worker(gpointer data, gpointer user_data) {
         next->steps = g_list_copy_deep(cand->steps, (GCopyFunc)g_strdup, NULL);
         next->steps = g_list_append(next->steps, g_strdup(p->name));
         next->meta = g_strdup(p->meta_info ? p->meta_info : "");
-        next->score = candidate_pipeline_score(next, score_readability(cand->buf.data, cand->buf.len));
+        double raw_score = score_readability(next->buf.data, next->buf.len);
+        next->score = candidate_pipeline_score(next, raw_score);
+
+        // Early pruning: don't even add to list if it's pure garbage
+        // Threshold is intentionally very low to avoid missing nested encoding steps
+        if (next->score < 0.04 && next->buf.len > 12) {
+            candidate_free(next);
+            continue;
+        }
+        
         produced = g_list_append(produced, next);
     }
     g_list_free(results);
@@ -638,17 +649,16 @@ static GList* dedupe_candidate_results(GList *candidates, GHashTable *visited) {
     GList *deduped = NULL;
     for (GList *iter = candidates; iter; iter = iter->next) {
         Candidate *cand = (Candidate*)iter->data;
-        char *key = buffer_key(&cand->buf);
-        if (g_hash_table_contains(visited, key)) {
-            g_free(key);
+        guint32 hash = buffer_hash_fast(&cand->buf);
+        if (g_hash_table_contains(visited, GUINT_TO_POINTER(hash))) {
             candidate_free(cand);
             continue;
         }
-        g_hash_table_add(visited, key);
-        deduped = g_list_append(deduped, cand);
+        g_hash_table_add(visited, GUINT_TO_POINTER(hash));
+        deduped = g_list_prepend(deduped, cand);
     }
     g_list_free(candidates);
-    return deduped;
+    return g_list_reverse(deduped);
 }
 
 // Adaptive beam width based on score variance
@@ -719,7 +729,7 @@ static GList* execute_planned_pipeline(const Buffer *input, const PipelinePlan *
     // Initialize global thread pool once
     init_pipeline_pool();
 
-    GHashTable *visited = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    GHashTable *visited = g_hash_table_new(g_direct_hash, g_direct_equal);
     GList *beam = NULL;
     GList *all_seen = NULL;
 
@@ -731,7 +741,7 @@ static GList* execute_planned_pipeline(const Buffer *input, const PipelinePlan *
     init->meta = g_strdup("");
     beam = g_list_append(beam, init);
     all_seen = g_list_append(all_seen, candidate_clone(init));
-    g_hash_table_add(visited, buffer_key(&init->buf));
+    g_hash_table_add(visited, GUINT_TO_POINTER(buffer_hash_fast(&init->buf)));
 
     int current_beam_width = plan->beam_width;
 
@@ -786,7 +796,7 @@ static GList* execute_planned_pipeline(const Buffer *input, const PipelinePlan *
             }
             // Wait for all locally dispatched tasks to complete
             while (g_atomic_int_get(&pending_tasks) > 0) {
-                g_usleep(1000); // 1ms
+                g_usleep(100); // reduced from 1000us to 100us for responsiveness
             }
         } else {
             // Fallback to sequential processing if pool unavailable
@@ -895,7 +905,7 @@ static GList* execute_planned_pipeline(const Buffer *input, const PipelinePlan *
 
     all_seen = g_list_sort(all_seen, (GCompareFunc)compare_candidate);
     
-    GHashTable *final_visited = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    GHashTable *final_visited = g_hash_table_new(g_direct_hash, g_direct_equal);
     all_seen = dedupe_candidate_results(all_seen, final_visited);
     g_hash_table_destroy(final_visited);
     
@@ -914,7 +924,7 @@ GList* pipeline_beam_search(Buffer input, int max_depth, int beam_width) {
     PluginManager *pm = core_get_plugin_manager();
     if (!pm) return NULL;
 
-    GHashTable *visited = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    GHashTable *visited = g_hash_table_new(g_direct_hash, g_direct_equal);
     GList *beam = NULL;
 
     // Initial candidate

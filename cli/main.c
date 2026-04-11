@@ -381,7 +381,7 @@ int main(int argc, char *argv[]) {
         }
     }
 #endif
-    CliOptions options = { FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, 3, 1 };
+    CliOptions options = { FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, 6, 1 };
     GError *error = NULL;
     gchar *stdin_input = NULL;
     gchar *input = NULL;
@@ -427,7 +427,18 @@ int main(int argc, char *argv[]) {
     }
 
     if (argc > 1) {
-        input = read_input_argument(argv[1]);
+        if (argc == 2) {
+            // Standard single argument / file path logic
+            input = read_input_argument(argv[1]);
+        } else {
+            // Join all remaining arguments with a space
+            GString *joined = g_string_new(NULL);
+            for (int i = 1; i < argc; i++) {
+                if (i > 1) g_string_append_c(joined, ' ');
+                g_string_append(joined, argv[i]);
+            }
+            input = g_string_free(joined, FALSE);
+        }
     } else {
         stdin_input = read_stdin_input();
         input = stdin_input ? g_strdup(stdin_input) : NULL;
@@ -459,7 +470,7 @@ int main(int argc, char *argv[]) {
     int exit_code = 0;
 
     if (options.pipeline) {
-        int beam_width = options.fast ? 3 : MAX(5, options.top_n);
+        int beam_width = options.fast ? 3 : MAX(15, options.top_n);
         int max_depth = options.fast ? MIN(options.max_depth, 2) : options.max_depth;
 
         Buffer in = buffer_new((const unsigned char*)input, strlen(input));

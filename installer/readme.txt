@@ -15,7 +15,7 @@ INSTALLATION STEPS
 USAGE
 - GUI: Double-click desktop icon
 - CLI: Open Command Prompt and type:
-  HyperDecode "SGVsbG8gV29ybGQ="
+  cli\bin\hyperdecode.exe "SGVsbG8gV29ybGQ="
 
 SUPPORT
 https://github.com/hyperdecode/hyperdecode/issues

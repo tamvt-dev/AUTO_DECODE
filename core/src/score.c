@@ -62,22 +62,27 @@ double score_readability(const unsigned char *data, size_t len) {
     
     double printable_score = (double)printable / len;
     double garbage_penalty = (double)high_garbage / len;
+
+    // Fast Path: If it's mostly garbage, don't waste time on linguistic analysis
+    if (garbage_penalty > 0.3) {
+        return printable_score - (3.0 * garbage_penalty);
+    }
+
     double repeat_penalty = (len > 0) ? (double)repeat_score_accum / len : 0.0;
 
-    // 2. Common Word Detection
     static const char *common_words[] = {
-        "the", "and", "for", "are", "but", "not", "you", "all",
-        "any", "can", "her", "was", "one", "our", "out", "day",
-        "get", "has", "him", "his", "how", "man", "new", "now",
-        "old", "see", "two", "way", "who", "boy", "did", "its",
-        "let", "put", "say", "she", "too", "use", "with", "have",
-        "this", "will", "your", "from", "they", "been", "more",
-        "when", "time", "very", "just", "know", "take", "into",
-        "year", "some", "than", "them", "only", "come", "make",
-        "over", "such", "back", "after", "work", "first", "well",
-        "hello", "world", "secret", "flag", "root", "admin", "password",
-        "user", "login", "data", "test", "null", "true", "false"
+        "admin", "after", "all", "and", "any", "are", "back", "been", "boy", "but",
+        "can", "come", "ctf{", "data", "day", "did", "ent", "ere", "false", "first",
+        "flag", "flag{", "for", "from", "get", "has", "have", "hello", "her", "him",
+        "his", "how", "htbs{", "ing", "into", "its", "just", "key{", "know", "let",
+        "login", "make", "man", "more", "new", "not", "now", "old", "one", "only",
+        "our", "out", "over", "password", "put", "re", "root", "root{", "say", "see",
+        "she", "some", "such", "take", "test", "than", "the", "them", "they", "this",
+        "time", "too", "true", "two", "use", "user", "very", "was", "way", "well",
+        "when", "who", "will", "with", "work", "world", "year", "you", "your"
     };
+    static const int num_words = sizeof(common_words) / sizeof(char *);
+
     size_t word_match = 0;
     size_t total_words = 0;
     for (size_t i = 0; i < len; i++) {
@@ -85,12 +90,19 @@ double score_readability(const unsigned char *data, size_t len) {
             size_t start = i;
             while (i < len && isalpha(data[i])) i++;
             size_t wlen = i - start;
-            total_words++;
-            for (size_t w = 0; w < sizeof(common_words)/sizeof(char*); w++) {
-                if (wlen == strlen(common_words[w]) &&
-                    strncasecmp((const char*)data + start, common_words[w], wlen) == 0) {
-                    word_match++;
-                    break;
+            if (wlen >= 2) {
+                total_words++;
+                // Binary search for common words
+                int low = 0, high = num_words - 1;
+                while (low <= high) {
+                    int mid = low + (high - low) / 2;
+                    int cmp = strncasecmp((const char*)data + start, common_words[mid], wlen);
+                    if (cmp == 0 && common_words[mid][wlen] == '\0') {
+                        word_match++;
+                        break;
+                    }
+                    if (cmp < 0) high = mid - 1;
+                    else low = mid + 1;
                 }
             }
             i--;
@@ -98,13 +110,25 @@ double score_readability(const unsigned char *data, size_t len) {
     }
     double word_score = (total_words > 0) ? (double)word_match / total_words : 0.0;
 
-    // 2b. Trigram Scoring (Top CTF/English patterns) - Normalized
-    static const char *common_trigrams[] = { "the", "and", "ing", "her", "hat", "his", "tha", "ere", "for", "ent" };
+    // 2b. EXTREME Optimized Trigram Scoring (using bit-packed table)
+    static gboolean trigram_init = FALSE;
+    static char tri_table[27][27][27] = {0}; // compact 3D table for 'a'-'z'
+    if (!trigram_init) {
+        const char *tgs[] = { "the", "and", "ing", "her", "hat", "his", "tha", "ere", "for", "ent" };
+        for (int i = 0; i < 10; i++) 
+            tri_table[tgs[i][0]-'a'][tgs[i][1]-'a'][tgs[i][2]-'a'] = 1;
+        trigram_init = TRUE;
+    }
+    
     size_t trigram_matches = 0;
-    for (size_t i = 0; i + 2 < len; i++) {
-        char tg[4] = { tolower(data[i]), tolower(data[i+1]), tolower(data[i+2]), '\0' };
-        for (size_t t = 0; t < 10; t++) {
-            if (strcmp(tg, common_trigrams[t]) == 0) { trigram_matches++; break; }
+    if (len >= 3) {
+        for (size_t i = 0; i + 2 < len; i++) {
+            unsigned char c1 = tolower(data[i]);
+            unsigned char c2 = tolower(data[i+1]);
+            unsigned char c3 = tolower(data[i+2]);
+            if (c1 >= 'a' && c1 <= 'z' && c2 >= 'a' && c2 <= 'z' && c3 >= 'a' && c3 <= 'z') {
+                if (tri_table[c1-'a'][c2-'a'][c3-'a']) trigram_matches++;
+            }
         }
     }
     double trigram_score = (len > 5) ? (double)trigram_matches / (len - 2) : 0.0;
