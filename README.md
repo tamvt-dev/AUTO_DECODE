@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/Intelligence-Probabilistic_Search-brightgreen" alt="Intelligence">
   <img src="https://img.shields.io/badge/Language-Pure_C-blue" alt="Language">
   <img src="https://img.shields.io/badge/RAM_Usage-<32MB-orange" alt="RAM">
-  <img src="https://img.shields.io/badge/Status-v3.1.0-yellow" alt="Status">
+  <img src="https://img.shields.io/badge/Status-v3.2.0-yellow" alt="Status">
 </p>
 
 <p align="center">
