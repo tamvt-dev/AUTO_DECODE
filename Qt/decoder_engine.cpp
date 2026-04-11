@@ -6,9 +6,57 @@
 #include "../core/include/buffer.h"
 #include "../core/include/pipeline.h"
 #include "../core/include/plugin.h"
+#include "../core/include/recipe.h"
+#include <QJsonDocument>
 
 static QString bufferToString(const Buffer &buf) {
-    return QString::fromUtf8(reinterpret_cast<const char*>(buf.data), buf.len);
+    if (!buf.data || buf.len == 0) return QString();
+    
+    // Debug: print hex values
+    qDebug() << "Buffer length:" << buf.len;
+    for (size_t i = 0; i < buf.len && i < 20; i++) {
+        qDebug() << "Byte" << i << ":" << QString::number(buf.data[i], 16);
+    }
+    
+    // Create string directly from buffer as ASCII/Latin1
+    QString result = QString::fromLatin1(reinterpret_cast<const char*>(buf.data), buf.len);
+    qDebug() << "Result string:" << result;
+    return result;
+}
+
+DecoderEngine::RecipeResult DecoderEngine::executeRecipe(const QString &jsonStr, const QString &input)
+{
+    RecipeResult result;
+    if (input.isEmpty()) {
+        result.success = false;
+        result.error = "Empty input";
+        return result;
+    }
+
+    QByteArray jsonBytes = jsonStr.toUtf8();
+    Recipe *recipe = recipe_parse_json(jsonBytes.constData());
+    if (!recipe) {
+        result.success = false;
+        result.error = "Invalid recipe JSON";
+        return result;
+    }
+
+    QByteArray inputBytes = input.toUtf8();
+    Buffer inBuf = buffer_new(reinterpret_cast<const unsigned char*>(inputBytes.constData()), inputBytes.size());
+    Buffer outBuf = recipe_execute(recipe, inBuf);
+    recipe_free(recipe);
+    buffer_free(&inBuf);
+
+    if (outBuf.data) {
+        result.output = bufferToString(outBuf);
+        result.success = true;
+        buffer_free(&outBuf);
+    } else {
+        result.success = false;
+        result.error = "Recipe execution failed";
+        buffer_free(&outBuf);
+    }
+    return result;
 }
 
 static Plugin* findPluginByName(const QString &name)
@@ -176,34 +224,43 @@ DecoderEngine::PipelineResult DecoderEngine::runPipeline(const QString &input, i
     PipelineResult result;
     if (input.isEmpty()) {
         result.success = false;
+        result.errorMessage = "Empty input data.";
         return result;
     }
 
     QByteArray inBytes = input.toUtf8();
     Buffer in = buffer_new(reinterpret_cast<const unsigned char*>(inBytes.constData()), inBytes.size());
+    
+    // Perform deep heuristic search
     GList *candidates = pipeline_smart_search(in, maxDepth, beamWidth);
     buffer_free(&in);
 
     if (candidates) {
-        Candidate *best = (Candidate*)candidates->data;
-        result.output = bufferToString(best->buf);
-        result.score = best->score;
+        // Collect Top 5 candidates for UI visibility
+        int count = 0;
+        for (GList *iter = candidates; iter && count < 5; iter = iter->next, count++) {
+            Candidate *cand = (Candidate*)iter->data;
+            CandidateResult cr;
+            cr.output = bufferToString(cand->buf);
+            cr.score = cand->score;
 
-        QString steps;
-        for (GList *s = best->steps; s; s = s->next) {
-            if (!steps.isEmpty()) {
-                steps += " -> ";
+            // Simple route string
+            QString stepsStr;
+            for (GList *si = cand->history; si; si = si->next) {
+                StepInfo *info = (StepInfo*)si->data;
+                if (!stepsStr.isEmpty()) stepsStr += " -> ";
+                stepsStr += QString::fromUtf8(info->name);
+                
+                // Detailed history for step-by-step inspection
+                cr.history.append({QString::fromUtf8(info->name), bufferToString(info->buf)});
             }
-            steps += reinterpret_cast<const char*>(s->data);
+            cr.steps = stepsStr;
+            result.candidates.append(cr);
         }
-
-        result.steps =
-            "Input -> Fast Heuristic Engine -> AI Strategy Planner -> "
-            "Multi-Pipeline Executor -> Scoring Engine -> Auto Retry + Mutation -> Best Result"
-            "\nRoute: " + steps;
         result.success = true;
     } else {
         result.success = false;
+        result.errorMessage = "No valid decoding path discovered.";
     }
 
     if (candidates) {

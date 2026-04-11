@@ -14,6 +14,10 @@ Buffer buffer_clone(const Buffer *src);
 void buffer_free(Buffer *buf);
 gboolean buffer_equal(const Buffer *a, const Buffer *b);
 char* buffer_key(const Buffer *buf);
+
+// Fast DJB2-like hash for deduplication
+guint32 buffer_hash_fast(const Buffer *buf);
+
 #ifdef __cplusplus
 }
 #endif

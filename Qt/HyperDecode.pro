@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = HyperDecode
-QT += core widgets gui
+QT += core widgets gui concurrent
 CONFIG += c++11 console
 
 # Force MinGW to avoid toolchain mismatch.
@@ -11,6 +11,7 @@ QMAKE_CXX = g++
 INCLUDEPATH += ../core/include
 INCLUDEPATH += C:/msys64/ucrt64/include/glib-2.0
 INCLUDEPATH += C:/msys64/ucrt64/lib/glib-2.0/include
+INCLUDEPATH += C:/msys64/ucrt64/include/json-glib-1.0
 
 # Core sources
 SOURCES += \
@@ -24,15 +25,19 @@ SOURCES += \
     ../core/src/crash_handler.c \
     ../core/src/score.c \
     ../core/src/buffer.c \
-    ../core/src/pipeline.c
+    ../core/src/pipeline.c \
+    ../core/src/recipe.c
 
 # Plugins
 SOURCES += \
+    ../core/plugins/aes_plugin.c \
     ../core/plugins/atbash_plugin.c \
     ../core/plugins/base64_plugin.c \
     ../core/plugins/caesar_plugin.c \
+    ../core/plugins/gzip_plugin.c \
     ../core/plugins/rot13_plugin.c \
     ../core/plugins/scramble_plugin.c \
+    ../core/plugins/sha256_plugin.c \
     ../core/plugins/url_plugin.c \
     ../core/plugins/xor_plugin.c
 
@@ -45,7 +50,11 @@ SOURCES += \
     history_manager.cpp \
     history_tab.cpp \
     notification_widget.cpp \
-    notification_manager.cpp
+    notification_manager.cpp \
+    recipe_manager.cpp \
+    recipe_tab.cpp \
+    arg_editor_dialog.cpp \
+    batch_processor.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -53,7 +62,11 @@ HEADERS += \
     history_manager.h \
     history_tab.h \
     notification_widget.h \
-    notification_manager.h
+    notification_manager.h \
+    recipe_manager.h \
+    recipe_tab.h \
+    arg_editor_dialog.h \
+    batch_processor.h
 
 RESOURCES += resources.qrc
 RC_ICONS = icons/app.ico
@@ -62,7 +75,10 @@ RC_ICONS = icons/app.ico
 QMAKE_CFLAGS += -Wno-cast-function-type
 
 # Link GLib from the local MSYS2 UCRT64 environment.
-LIBS += -LC:/msys64/ucrt64/lib -lglib-2.0 -lintl -liconv
+LIBS += -LC:/msys64/ucrt64/lib -lglib-2.0 -lgobject-2.0 -lintl -liconv -ljson-glib-1.0
+
+# Link OpenSSL and zlib for crypto plugins
+LIBS += -lssl -lcrypto -lz
 
 # Debug / Release
 CONFIG(debug, debug|release) {

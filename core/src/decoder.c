@@ -60,11 +60,18 @@ gboolean is_morse(const char *text, size_t len) {
 
 gboolean is_base64(const char *text, size_t len) {
     if (!text || len < 4) return FALSE;
-    
+
+    if (is_hex(text, len) || is_binary(text, len) || is_morse(text, len)) {
+        return FALSE;
+    }
+
     const char *p = text;
     size_t count = 0;
-    
-    while (*p && count < 64) {
+    size_t significant = 0;
+    gboolean has_alpha = FALSE;
+    gboolean has_padding_or_symbol = FALSE;
+
+    while (*p && count < 256) {
         char c = *p;
         if (c != ' ' && c != '\n' && c != '\r') {
             if (!((c >= 'A' && c <= 'Z') ||
@@ -73,11 +80,26 @@ gboolean is_base64(const char *text, size_t len) {
                   c == '+' || c == '/' || c == '=')) {
                 return FALSE;
             }
+            significant++;
+            if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+                has_alpha = TRUE;
+            }
+            if (c == '+' || c == '/' || c == '=') {
+                has_padding_or_symbol = TRUE;
+            }
         }
         p++;
         count++;
     }
-    
+
+    if (significant < 4) {
+        return FALSE;
+    }
+
+    if (!has_alpha && !has_padding_or_symbol) {
+        return FALSE;
+    }
+
     return TRUE;
 }
 

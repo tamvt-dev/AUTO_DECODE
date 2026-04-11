@@ -58,9 +58,23 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         "openFile",
         "saveFile",
         "showAbout",
+        "startBatch",
+        "onBatchProgress",
+        "percent",
+        "onBatchStatus",
+        "message",
+        "onBatchFinished",
+        "summary",
+        "toggleHexView",
+        "enabled",
         "onHistoryItemSelected",
         "operation",
-        "input"
+        "input",
+        "onCandidateSelected",
+        "index",
+        "onHistoryStepClicked",
+        "name",
+        "output"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -98,9 +112,35 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         QtMocHelpers::SlotData<void()>(17, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'showAbout'
         QtMocHelpers::SlotData<void()>(18, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'startBatch'
+        QtMocHelpers::SlotData<void()>(19, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onBatchProgress'
+        QtMocHelpers::SlotData<void(int)>(20, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::Int, 21 },
+        }}),
+        // Slot 'onBatchStatus'
+        QtMocHelpers::SlotData<void(const QString &)>(22, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 23 },
+        }}),
+        // Slot 'onBatchFinished'
+        QtMocHelpers::SlotData<void(const QString &)>(24, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 25 },
+        }}),
+        // Slot 'toggleHexView'
+        QtMocHelpers::SlotData<void(bool)>(26, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::Bool, 27 },
+        }}),
         // Slot 'onHistoryItemSelected'
-        QtMocHelpers::SlotData<void(const QString &, const QString &)>(19, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { QMetaType::QString, 20 }, { QMetaType::QString, 21 },
+        QtMocHelpers::SlotData<void(const QString &, const QString &)>(28, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 29 }, { QMetaType::QString, 30 },
+        }}),
+        // Slot 'onCandidateSelected'
+        QtMocHelpers::SlotData<void(int)>(31, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::Int, 32 },
+        }}),
+        // Slot 'onHistoryStepClicked'
+        QtMocHelpers::SlotData<void(const QString &, const QString &)>(33, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 34 }, { QMetaType::QString, 35 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
@@ -140,7 +180,14 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 12: _t->openFile(); break;
         case 13: _t->saveFile(); break;
         case 14: _t->showAbout(); break;
-        case 15: _t->onHistoryItemSelected((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
+        case 15: _t->startBatch(); break;
+        case 16: _t->onBatchProgress((*reinterpret_cast<std::add_pointer_t<int>>(_a[1]))); break;
+        case 17: _t->onBatchStatus((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 18: _t->onBatchFinished((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 19: _t->toggleHexView((*reinterpret_cast<std::add_pointer_t<bool>>(_a[1]))); break;
+        case 20: _t->onHistoryItemSelected((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
+        case 21: _t->onCandidateSelected((*reinterpret_cast<std::add_pointer_t<int>>(_a[1]))); break;
+        case 22: _t->onHistoryStepClicked((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
         default: ;
         }
     }
@@ -165,14 +212,14 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 16)
+        if (_id < 23)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 16;
+        _id -= 23;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 16)
+        if (_id < 23)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 16;
+        _id -= 23;
     }
     return _id;
 }

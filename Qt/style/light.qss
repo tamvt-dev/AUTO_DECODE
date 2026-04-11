@@ -366,3 +366,48 @@ QWidget[class="notificationToast"][tone="error"] {
 QLabel[class="notificationLabel"] {
     color: #0A0E27;
 }
+
+QListWidget[class="candidateList"] {
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0D0;
+    border-radius: 4px;
+}
+
+QListWidget[class="candidateList"]::item {
+    background-color: #F3F4F1;
+    color: #0A0E27;
+    border-radius: 4px;
+    margin: 2px;
+    padding: 8px;
+}
+
+QListWidget[class="candidateList"]::item:selected {
+    background-color: #E8E8E8;
+    border: 1px solid #1A7D05;
+    color: #1A7D05;
+}
+
+QPushButton[class="stepButton"] {
+    background-color: #FFFFFF;
+    color: #555555;
+    border: 1px solid #D0D0D0;
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 11px;
+}
+
+QPushButton[class="stepButton"]:hover {
+    border-color: #1A7D05;
+    color: #1A7D05;
+}
+
+QLabel[class="flowArrow"] {
+    color: #D0D0D0;
+    font-weight: bold;
+}
+
+QComboBox[class="candidateCombo"] {
+    font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+    font-size: 12px;
+    padding: 6px;
+}

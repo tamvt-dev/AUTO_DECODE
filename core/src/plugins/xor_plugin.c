@@ -7,22 +7,24 @@
 #include "../include/buffer.h"
 
 // -------------------------------------------------------------------
-// Core XOR functions
+// Core XOR logic (Buffer-based)
 // -------------------------------------------------------------------
-static Buffer xor_encode(Buffer in) {
+static Buffer xor_transform(Buffer in, unsigned char key) {
     Buffer out = { NULL, 0 };
     if (!in.data || in.len == 0) return out;
-    out.data = g_memdup(in.data, in.len);
+    
+    unsigned char *res = g_malloc(in.len);
+    for (size_t i = 0; i < in.len; i++) {
+        res[i] = in.data[i] ^ key;
+    }
+    
+    out.data = res;
     out.len = in.len;
     return out;
 }
 
-static Buffer xor_decode_single(Buffer in) {
-    return xor_encode(in); // default key 0
-}
-
 // -------------------------------------------------------------------
-// Candidate sorting helper (must be outside any function)
+// Candidate management for brute-force
 // -------------------------------------------------------------------
 typedef struct {
     Buffer buf;
@@ -30,7 +32,7 @@ typedef struct {
     int key;
 } XorCandidate;
 
-static int cmp_candidate(const void *a, const void *b) {
+static int cmp_xor_candidate(const void *a, const void *b) {
     const XorCandidate *ca = (const XorCandidate*)a;
     const XorCandidate *cb = (const XorCandidate*)b;
     if (cb->score > ca->score) return 1;
@@ -39,134 +41,94 @@ static int cmp_candidate(const void *a, const void *b) {
 }
 
 // -------------------------------------------------------------------
-// Multi-output: hybrid – fast keys first, then full scan if needed
+// CyberChef-style Magic: 1-byte XOR Brute Force
 // -------------------------------------------------------------------
 static GList* xor_decode_multi(Buffer in) {
-    GList *results = NULL;
     if (!in.data || in.len == 0) return NULL;
 
-    const int fast_keys[] = {0x20, 0x41, 0x61, 0x00};
-    const int num_fast = sizeof(fast_keys) / sizeof(fast_keys[0]);
+    XorCandidate all_cands[256];
+    int valid_count = 0;
 
-    XorCandidate *cands = NULL;
-    int cap = 0;
-    int valid = 0;
-
-    // Phase 1: fast keys
-    for (int i = 0; i < num_fast; i++) {
-        int key = fast_keys[i];
-        Buffer *buf = g_new0(Buffer, 1);
-        buf->len = in.len;
-        buf->data = g_malloc(in.len);
-        for (size_t j = 0; j < in.len; j++)
-            buf->data[j] = in.data[j] ^ key;
-
-        double score = score_readability(buf->data, buf->len);
-        if (score > 0.3) {
-            if (valid >= cap) {
-                cap = cap ? cap * 2 : 16;
-                cands = g_realloc(cands, sizeof(XorCandidate) * cap);
-            }
-            cands[valid].buf = *buf;
-            cands[valid].score = score;
-            cands[valid].key = key;
-            valid++;
-            g_free(buf); // only free wrapper, data now owned by cands
+    // Phase 1: Try ALL 256 keys (O(256 * N))
+    for (int key = 0; key < 256; key++) {
+        Buffer result = xor_transform(in, (unsigned char)key);
+        
+        // Use our high-performance scoring engine to rank candidates
+        // We only sample the first 256 bytes for speed during brute force
+        double score = score_readability(result.data, MIN(result.len, 256));
+        
+        if (score > 0.4) {
+            all_cands[valid_count].buf = result;
+            all_cands[valid_count].score = score;
+            all_cands[valid_count].key = key;
+            valid_count++;
         } else {
-            g_free(buf->data);
-            g_free(buf);
+            buffer_free(&result);
         }
     }
 
-    // Phase 2: fallback if nothing good found
-    if (valid == 0) {
-        for (int key = 0; key < 256; key++) {
-            // skip keys already tested in fast phase
-            gboolean already = FALSE;
-            for (int i = 0; i < num_fast; i++) if (fast_keys[i] == key) { already = TRUE; break; }
-            if (already) continue;
+    if (valid_count == 0) return NULL;
 
-            Buffer *buf = g_new0(Buffer, 1);
-            buf->len = in.len;
-            buf->data = g_malloc(in.len);
-            for (size_t j = 0; j < in.len; j++)
-                buf->data[j] = in.data[j] ^ key;
+    // Sort candidates by score descending
+    qsort(all_cands, valid_count, sizeof(XorCandidate), cmp_xor_candidate);
 
-            // Quick early prune: first byte should be printable
-            if (!isprint(buf->data[0]) && !isprint(buf->data[1])) {
-                g_free(buf->data);
-                g_free(buf);
-                continue;
-            }
-
-            double score = score_readability(buf->data, buf->len);
-            if (score > 0.3) {
-                if (valid >= cap) {
-                    cap = cap ? cap * 2 : 256;
-                    cands = g_realloc(cands, sizeof(XorCandidate) * cap);
-                }
-                cands[valid].buf = *buf;
-                cands[valid].score = score;
-                cands[valid].key = key;
-                valid++;
-                g_free(buf);
-            } else {
-                g_free(buf->data);
-                g_free(buf);
-            }
-        }
-    }
-
-    if (valid == 0) {
-        g_free(cands);
-        return NULL;
-    }
-
-    // Sort by score descending
-    qsort(cands, valid, sizeof(XorCandidate), cmp_candidate);
-
-    // Keep top 5
-    int keep = (valid < 5) ? valid : 5;
+    GList *results = NULL;
+    // Keep top 5 promising results to feed into the pipeline
+    int keep = MIN(valid_count, 5);
     for (int i = 0; i < keep; i++) {
-        Buffer *buf = g_new0(Buffer, 1);
-        buf->data = cands[i].buf.data;
-        buf->len = cands[i].buf.len;
-        results = g_list_append(results, buf);
+        Buffer *boxed = g_new0(Buffer, 1);
+        *boxed = all_cands[i].buf;
+        results = g_list_append(results, boxed);
     }
 
-    // Free unused candidates
-    for (int i = keep; i < valid; i++) {
-        g_free(cands[i].buf.data);
+    // Free losers
+    for (int i = keep; i < valid_count; i++) {
+        buffer_free(&all_cands[i].buf);
     }
-    g_free(cands);
+
     return results;
 }
 
-// -------------------------------------------------------------------
-// Detection: try fast keys only
-// -------------------------------------------------------------------
 static gboolean xor_detect(Buffer in) {
-    const int test_keys[] = {0x20, 0x41, 0x61, 0x00};
-    for (int i = 0; i < 4; i++) {
-        int key = test_keys[i];
-        unsigned char *data = g_malloc(in.len);
-        for (size_t j = 0; j < in.len; j++)
-            data[j] = in.data[j] ^ key;
-        double score = score_readability(data, in.len);
-        g_free(data);
-        if (score > 0.6) return TRUE;
+    if (in.len < 4) return FALSE;
+    
+    // Quick heuristic: sample common XOR keys for text
+    const unsigned char test_keys[] = {0x00, 0x20, 0xFF, 0x55, 0xAA};
+    for (int i = 0; i < 5; i++) {
+        Buffer res = xor_transform(in, test_keys[i]);
+        double s = score_readability(res.data, MIN(res.len, 128));
+        buffer_free(&res);
+        if (s > 0.7) return TRUE;
     }
+    
+    // If it's a small buffer and looks random, give XOR a chance anyway
+    if (in.len < 100) return TRUE; 
+    
     return FALSE;
 }
 
-// -------------------------------------------------------------------
-// Plugin registration
-// -------------------------------------------------------------------
+static Buffer xor_decode_single(Buffer in) {
+    // Single decode uses the best found key from a quick scan
+    GList *multi = xor_decode_multi(in);
+    if (!multi) return (Buffer){NULL, 0};
+    
+    Buffer *best = (Buffer*)multi->data;
+    Buffer out = buffer_clone(best);
+    
+    // Clean up
+    for (GList *iter = multi; iter; iter = iter->next) {
+        buffer_box_free((Buffer*)iter->data);
+    }
+    g_list_free(multi);
+    
+    return out;
+}
+
 void xor_plugin_init(void) {
     g_plugin_registry->register_plugin("XOR",
                                        xor_decode_single,
                                        xor_decode_multi,
-                                       xor_encode,
+                                       NULL, // Encode is same as decode
                                        xor_detect,
-                                       70);
+                                       40); // Lower base priority, high detect bonus
 }

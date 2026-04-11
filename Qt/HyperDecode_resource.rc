@@ -1,6 +1,6 @@
 #include <windows.h>
 
-IDI_ICON1	ICON	"C:\\Users\\Administrator\\Desktop\\my_project\\auto_decoder\\Qt\\icons\\app.ico"
+IDI_ICON1	ICON	"C:/Users/Administrator/Desktop/my_project/auto_decoder2/Qt/icons/app.ico"
 
 VS_VERSION_INFO VERSIONINFO
 	FILEVERSION 0,0,0,0

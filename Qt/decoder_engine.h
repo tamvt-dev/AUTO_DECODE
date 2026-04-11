@@ -31,13 +31,27 @@ public:
     };
     EncodeResult encode(const QString &input, int formatIndex);
 
-    struct PipelineResult {
+    struct CandidateResult {
         QString output;
         double score = 0.0;
         QString steps;
-        bool success = false;
+        // List of (Step Name, Step Output) for high-fidelity inspection
+        QList<QPair<QString, QString>> history;
     };
-    PipelineResult runPipeline(const QString &input, int maxDepth = 3, int beamWidth = 5);
+
+    struct PipelineResult {
+        QList<CandidateResult> candidates;
+        bool success = false;
+        QString errorMessage;
+    };
+    PipelineResult runPipeline(const QString &input, int maxDepth = 4, int beamWidth = 10);
+
+    struct RecipeResult {
+        QString output;
+        bool success = false;
+        QString error;
+    };
+    RecipeResult executeRecipe(const QString &jsonStr, const QString &input);
 
     void clearCache();
 
