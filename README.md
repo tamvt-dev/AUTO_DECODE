@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/Intelligence-Probabilistic_Search-brightgreen" alt="Intelligence">
   <img src="https://img.shields.io/badge/Language-Pure_C-blue" alt="Language">
   <img src="https://img.shields.io/badge/RAM_Usage-<32MB-orange" alt="RAM">
-  <img src="https://img.shields.io/badge/Status-Beta_3.1-yellow" alt="Status">
+  <img src="https://img.shields.io/badge/Status-v3.1.0-yellow" alt="Status">
 </p>
 
 <p align="center">
@@ -15,36 +15,50 @@
 
 ## 🔍 Overview
 
-**HyperDecode** treats decoding as a dynamic search problem rather than a static sequence of operations. 
+**HyperDecode** treats decoding as a dynamic search problem rather than a static sequence of operations. Unlike traditional tools, it explores a weighted tree of possible decoding paths using a **Heuristic Beam Search** strategy—simulating a lightweight inference process. 
 
-Unlike traditional decoders that apply fixed transformations, HyperDecode explores a weighted tree of possible decoding paths using a **Heuristic Beam Search** strategy—simulating a lightweight inference process. The search process forms a **Directed Acyclic Graph (DAG)** where each path represents a potential decoding chain, allowing the engine to recover the most probable payload even when the exact transformation sequence is unknown.
+The search process forms a **Directed Acyclic Graph (DAG)**, allowing the engine to recover the original payload across deeply nested and unknown transformation layers with high-confidence accuracy.
+
+---
+
+## 🧠 Design Philosophy
+
+HyperDecode is built on a simple principle:
+> *"If a human can iteratively guess and validate decoding steps, the process can be modeled as a search problem."*
+
+By combining heuristic scoring with controlled exploration, HyperDecode automates this human intuition at machine speed. Inspired by search strategies used in AI inference and symbolic execution systems.
 
 ---
 
 ## 🧬 How It Works (Core Concepts)
 
-HyperDecode models de-obfuscation as a traversal through a **State Space**:
+### 1. The Search Workflow (Visual)
 
-- **Nodes**: Each intermediate output is treated as a state in the transformation graph.
+```mermaid
+graph TD
+    Raw["Input Data"] --> Gen{"Candidate Generator"}
+    Gen -->|"Decoders (Base64/Hex/XOR)"| S["Score Evaluation"]
+    S --> Engine["Scoring Engine"]
+    Engine -->|"Heuristic Pruning"| Pool["Beam Search Pool"]
+    Pool -->|"Depth Check"| Gen
+    Pool -->|"High Confidence"| Result["Ranked Output"]
+```
+
+### 2. Theoretical Framework
+- **State Space**: Each intermediate output is treated as a node in the transformation graph.
 - **Transition Function**: Decoders act as edges transforming one state into another (e.g., $f(Base64)$).
-- **Heuristic Function**: The Scoring Engine acts as a **proxy for semantic understanding**, approximating how "meaningful" a decoded output is without requiring full context awareness.
-- **Beam Width Control**: Limits exploration to the Top-K candidates at each depth level to prevent recursive combinatorial explosion.
-
-### Signal Exploitation
-Most obfuscated data retains **"Weak Signals"** that HyperDecode's scoring engine identifies:
-- **Entropy Analysis**: Measures Shannon entropy; lower entropy in ASCII/JSON indicates high-confidence decoding.
-- **Magic Number Detection**: Instant recognition of file signatures (e.g., `50 4B`, `7B 22`, `4D 5A`).
-- **Frequency Analysis**: Exploits character distribution patterns to identify valid linguistic or structural signals.
+- **Heuristic Function**: The Scoring Engine acts as a **proxy for semantic understanding**, approximating how "meaningful" a result is without requiring full context awareness.
+- **State Deduplication**: Prevents redundant exploration by hashing and caching previously seen states to optimize performance.
 
 ---
 
 ## ✨ Key Features
 
-- 🧠 **Search-Based Engine**: Dynamically explores a transformation graph to find the most probable decoding path.
-- ⚡ **High-Speed C Core**: Native performance optimized for massive recursive tasks.
-- 🔋 **Efficient Footprint**: Maintains a **<32MB RAM** footprint—ideal for embedded-friendly use.
+- 🧠 **Heuristic Graph Search**: Dynamically explores a transformation DAG using beam search and scoring heuristics.
+- ⚡ **Native Performance**: High-speed C core optimized for massive recursive tasks and low latency.
+- 🔋 **Feather-Light**: Maintains a **<32MB RAM** footprint—ideal for embedded and professional environments.
 - 📋 **Recipe System**: Design, save, and batch-apply custom transformation chains.
-- ⌨️ **Hacker CLI**: Full ANSI color support with interactive trace and JSON metadata export.
+- ⌨️ **Hacker CLI**: Professional terminal interface with interactive path trace and JSON export.
 
 ---
 
@@ -59,31 +73,33 @@ Most obfuscated data retains **"Weak Signals"** that HyperDecode's scoring engin
 
 ---
 
-## 🚀 Quick Start
+## 📦 Installation Guide (CLI)
 
-### Intelligent Pipeline Search
-```bash
-hyperdecode "SGVsbG8=" --pipeline
-```
+### Option 1: One-Click Install (Recommended)
+1. Download the latest **HyperDecode-CLI.rar** from the [Releases](https://github.com/tamvt-dev/HyperDecode/releases) section.
+2. Extract the package to your work directory.
+3. Open PowerShell in the project root and run:
+   ```powershell
+   .\install_cli.ps1
+   ```
+4. Restart your terminal to apply the PATH changes globally.
 
-### Path Trace (Logic Inspection)
-```bash
-hyperdecode input.txt --trace
-```
+### Option 2: Manual PATH Setup
+1. Copy the full path to the `cli/bin` folder.
+2. Add this path to your system's **Environment Variables** (PATH).
 
 ---
 
-## ⚠️ Limitations
-
-- **Path Depth**: Extremely nested transformations (>8 layers) significantly increase search complexity.
-- **Binary Noise**: Heuristic scoring may mis-prioritize highly randomized binary data.
-- **Probabilistic Nature**: As a heuristic engine, it target high-probability paths but does not guarantee a solution for 100% of custom encodings.
+## 🚀 Quick Start
+- **Intelligent Pipeline**: `hyperdecode "EncodedData" --pipeline`
+- **Logic Inspection**: `hyperdecode input.txt --trace`
+- **Automation (JSON)**: `hyperdecode data.bin --json > metadata.json`
 
 ---
 
 ## 🛤️ Roadmap
 - [ ] **Adaptive Beam Width**: Dynamically adjust search breadth based on entropy and confidence metrics.
-- [ ] **Learned Scoring Model**: Integrate lightweight ML-based scoring for improved path accuracy.
+- [ ] **Learned Scoring Model**: Integrate ML-based scoring for research-grade path accuracy.
 - [ ] **Scripting Plugin**: Lua & Python support for custom transition functions.
 
 ---
