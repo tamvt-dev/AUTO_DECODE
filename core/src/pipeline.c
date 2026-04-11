@@ -7,16 +7,33 @@
 #include <ctype.h>
 #include <string.h>
 
-static char* buffer_key_raw(const unsigned char *data, size_t len) {
-    static const char hex[] = "0123456789abcdef";
-    char *out = g_malloc(len * 2 + 1);
-    for (size_t i = 0; i < len; i++) {
-        out[i*2]     = hex[(data[i] >> 4) & 0xF];
-        out[i*2 + 1] = hex[data[i] & 0xF];
+// Global thread pool for pipeline execution (reused across all searches)
+static GThreadPool *g_pipeline_pool = NULL;
+static GMutex g_pool_mutex;
+static gboolean g_pool_initialized = FALSE;
+
+// Forward declaration
+static void pipeline_executor_worker(gpointer data, gpointer user_data);
+
+static void init_pipeline_pool(void) {
+    g_mutex_lock(&g_pool_mutex);
+    if (!g_pool_initialized) {
+        GError *error = NULL;
+        g_pipeline_pool = g_thread_pool_new(pipeline_executor_worker, NULL, 1, FALSE, &error); // 1 thread max for i5-7200U
+        if (error) {
+            g_error_free(error);
+            g_pipeline_pool = NULL;
+        }
+        g_pool_initialized = TRUE;
     }
-    out[len * 2] = '\0';
-    return out;
+    g_mutex_unlock(&g_pool_mutex);
 }
+
+// Fast hash function for deduplication (replaces slow hex string generation)
+// buffer_hash_fast is now provided by buffer.c/buffer.h
+
+// Deduplication keys now use buffer_hash_fast (32-bit) to save RAM
+// instead of generating massive hex strings.
 
 static int compare_candidate(const void *a, const void *b) {
     const Candidate *ca = (const Candidate*)a;
@@ -26,9 +43,29 @@ static int compare_candidate(const void *a, const void *b) {
     return 0;
 }
 
-static void candidate_free(Candidate *c) {
+static StepInfo* step_info_new(const char *name, Buffer buf) {
+    StepInfo *si = g_new0(StepInfo, 1);
+    si->name = g_strdup(name);
+    si->buf = buffer_clone(&buf);
+    return si;
+}
+
+static void step_info_free(StepInfo *si) {
+    if (si) {
+        g_free(si->name);
+        buffer_free(&si->buf);
+        g_free(si);
+    }
+}
+
+static StepInfo* step_info_clone(const StepInfo *src) {
+    return step_info_new(src->name, src->buf);
+}
+
+void candidate_free(Candidate *c) {
     if (c) {
-        g_free(c->buf.data);
+        buffer_free(&c->buf);
+        g_list_free_full(c->history, (GDestroyNotify)step_info_free);
         g_list_free_full(c->steps, g_free);
         g_free(c->meta);
         g_free(c);
@@ -37,10 +74,9 @@ static void candidate_free(Candidate *c) {
 
 static Candidate* candidate_clone(const Candidate *src) {
     Candidate *dst = g_new0(Candidate, 1);
-    dst->buf.data = g_malloc(src->buf.len);
-    memcpy(dst->buf.data, src->buf.data, src->buf.len);
-    dst->buf.len = src->buf.len;
+    dst->buf = buffer_clone(&src->buf);
     dst->score = src->score;
+    dst->history = g_list_copy_deep(src->history, (GCopyFunc)step_info_clone, NULL);
     dst->steps = g_list_copy_deep(src->steps, (GCopyFunc)g_strdup, NULL);
     dst->meta = g_strdup(src->meta);
     return dst;
@@ -58,9 +94,20 @@ typedef struct {
     GList *plugins; // PlannedPlugin*
 } PipelinePlan;
 
-static double candidate_pipeline_score(const Candidate *cand);
+// Cache format detection results in candidate
+typedef struct {
+    gboolean checked;
+    gboolean is_base64;
+    gboolean is_hex;
+    gboolean is_binary;
+    gboolean is_morse;
+    gboolean is_url;
+} FormatCache;
+
+static double candidate_pipeline_score(const Candidate *cand, double parent_readability);
 static double step_confidence_boost(const char *step_name);
 static gboolean should_stop_on_readable_text(const Candidate *cand);
+static gboolean is_high_confidence_result(const Candidate *cand);
 static gboolean is_exploratory_transform(const char *step_name);
 static gboolean should_skip_plugin_for_candidate(const Candidate *cand, const Plugin *plugin, int depth);
 static const char* candidate_last_step(const Candidate *cand);
@@ -68,9 +115,10 @@ static gboolean has_structured_artifact(const Buffer *buf);
 static gboolean is_structured_transform(const char *step_name);
 static double printable_ratio(const Buffer *buf);
 static gboolean is_promising_text_candidate(const Buffer *buf);
+static int adaptive_beam_width(GList *candidates, int base_width);
 
 static gboolean is_base64_like(const Buffer *buf) {
-    if (!buf || !buf->data || buf->len < 8) return FALSE;
+    if (!buf || !buf->data || buf->len < 4) return FALSE;
     size_t significant = 0;
     for (size_t i = 0; i < buf->len; i++) {
         unsigned char c = buf->data[i];
@@ -80,11 +128,11 @@ static gboolean is_base64_like(const Buffer *buf) {
             return FALSE;
         }
     }
-    return significant >= 8;
+    return significant >= 4;
 }
 
 static gboolean is_hex_like(const Buffer *buf) {
-    if (!buf || !buf->data || buf->len < 4) return FALSE;
+    if (!buf || !buf->data || buf->len < 2) return FALSE;
     size_t significant = 0;
     for (size_t i = 0; i < buf->len; i++) {
         unsigned char c = buf->data[i];
@@ -96,7 +144,7 @@ static gboolean is_hex_like(const Buffer *buf) {
 }
 
 static gboolean is_binary_like(const Buffer *buf) {
-    if (!buf || !buf->data || buf->len < 8) return FALSE;
+    if (!buf || !buf->data || buf->len < 4) return FALSE;
     size_t bits = 0;
     for (size_t i = 0; i < buf->len; i++) {
         unsigned char c = buf->data[i];
@@ -150,6 +198,7 @@ static double printable_ratio(const Buffer *buf) {
     return (double)printable / (double)buf->len;
 }
 
+__attribute__((unused))
 static gboolean is_promising_text_candidate(const Buffer *buf) {
     if (!buf || !buf->data || buf->len == 0) return FALSE;
     if (has_structured_artifact(buf)) return FALSE;
@@ -162,8 +211,11 @@ static int plugin_priority_for_input(Plugin *p, const Buffer *input) {
     int priority = p->priority * 10;
     if (p->detect && p->detect(*input)) priority += 120;
 
-    if (g_strcmp0(p->name, "Base64") == 0 && is_base64_like(input)) priority += 70;
-    if (g_strcmp0(p->name, "Hex") == 0 && is_hex_like(input)) priority += 70;
+    // Check if input is pure hex (only 0-9, a-f, A-F)
+    gboolean is_pure_hex = is_hex_like(input);
+    
+    if (g_strcmp0(p->name, "Hex") == 0 && is_pure_hex) priority += 100; // Higher priority for hex
+    if (g_strcmp0(p->name, "Base64") == 0 && is_base64_like(input) && !is_pure_hex) priority += 70;
     if (g_strcmp0(p->name, "Binary") == 0 && is_binary_like(input)) priority += 70;
     if (g_strcmp0(p->name, "Morse") == 0 && is_morse_like(input)) priority += 70;
     if (g_strcmp0(p->name, "URL") == 0 && is_url_like(input)) priority += 60;
@@ -234,27 +286,65 @@ static PipelinePlan* build_pipeline_plan(const Buffer *input, int max_depth, int
     return plan;
 }
 
-static double candidate_pipeline_score(const Candidate *cand) {
+static double candidate_pipeline_score(const Candidate *cand, double parent_readability) {
     int step_count = g_list_length(cand->steps);
     double score = score_readability(cand->buf.data, cand->buf.len);
-    double confidence = 0.0;
-    gboolean structured_artifact = has_structured_artifact(&cand->buf);
-
+    
+    // Depth penalty (increased per user suggestion)
+    score -= 0.12 * step_count;
+    
+    // Bonus for readable text
+    if (should_stop_on_readable_text(cand)) {
+        if (!has_structured_artifact(&cand->buf)) {
+            score += 0.6;   // Real text
+        } else {
+            score += 0.1;   // Encoded text
+        }
+    }
+    
+    // Feature: apply structural confidence boost compound across entire chain
+    // (with anti-exploit momentum decay to prevent rewarding infinite garbage decodes)
+    double momentum = 0.0;
     for (GList *iter = cand->steps; iter; iter = iter->next) {
-        const char *step = (const char*)iter->data;
-        if (g_strcmp0(step, "Input") == 0) continue;
-        confidence += step_confidence_boost(step);
-        if (structured_artifact && is_exploratory_transform(step)) confidence -= 0.35;
-        if (!structured_artifact && is_structured_transform(step)) confidence += 0.05;
+        momentum = (momentum * 0.7) + step_confidence_boost((const char*)iter->data);
     }
-
-    score -= (step_count > 1) ? 0.06 * (step_count - 1) : 0.0;
-    if (structured_artifact) {
-        score -= 0.22;
-    } else if (should_stop_on_readable_text(cand)) {
-        score += 0.18;
+    
+    // The infinite loop problem is mathematically clamped by the multiplicative decay (x0.7) 
+    // overtaking the linear depth penalty (-0.12).
+    score += momentum;
+    
+    // Evaluate readability collapse
+    const char *last = candidate_last_step(cand);
+    double improvement = score_readability(cand->buf.data, cand->buf.len) - parent_readability;
+    
+    if (improvement < -0.15 && is_exploratory_transform(last)) {
+        score -= 0.4; // Only punish exploratory mutations that collapse readability into garbage
     }
-    score += confidence;
+    const char *prev = (step_count > 1) ? 
+        g_list_nth_data(cand->steps, step_count - 2) : NULL;
+    
+    if (prev && last) {
+        // Base64 -> Hex is common pattern
+        if (g_strcmp0(prev, "Base64") == 0 && g_strcmp0(last, "Hex") == 0) {
+            score += 0.1;
+        }
+        // Penalize unlikely chains (repeated transforms)
+        if (g_strcmp0(prev, last) == 0) {
+            if (is_exploratory_transform(last)) {
+                score -= 1.0; // Very harsh penalty for looping XOR / ROT13
+            } else {
+                score -= 0.6; // Increased friction for repeated structured decodes (Base64 -> Base64)
+            }
+        }
+        // Hex -> Base64 is also common
+        if (g_strcmp0(prev, "Hex") == 0 && g_strcmp0(last, "Base64") == 0) {
+            score += 0.6;
+        }
+        if (g_strcmp0(prev, "Base64") == 0 && g_strcmp0(last, "Morse") == 0) {
+            score += 0.4;
+        }
+    }
+    
     return score;
 }
 
@@ -283,6 +373,7 @@ static gboolean is_exploratory_transform(const char *step_name) {
            g_strcmp0(step_name, "Scramble") == 0;
 }
 
+__attribute__((unused))
 static gboolean is_structured_transform(const char *step_name) {
     if (!step_name) return FALSE;
     return g_strcmp0(step_name, "Binary") == 0 ||
@@ -295,6 +386,15 @@ static gboolean is_structured_transform(const char *step_name) {
 static gboolean has_structured_artifact(const Buffer *buf) {
     if (!buf || !buf->data || buf->len == 0) return FALSE;
     return is_binary_like(buf) || is_hex_like(buf) || is_base64_like(buf) || is_morse_like(buf) || is_url_like(buf);
+}
+
+// Early termination: check if candidate is high-confidence result
+static gboolean is_high_confidence_result(const Candidate *cand) {
+    if (!cand || !cand->buf.data || cand->buf.len == 0) return FALSE;
+    double score = score_readability(cand->buf.data, cand->buf.len);
+    return score > 1.8 && 
+           !has_structured_artifact(&cand->buf) &&
+           is_alpha_text(&cand->buf);
 }
 
 static gboolean should_stop_on_readable_text(const Candidate *cand) {
@@ -338,23 +438,22 @@ static gboolean should_stop_on_readable_text(const Candidate *cand) {
     return score_readability(cand->buf.data, cand->buf.len) >= 1.05;
 }
 
-static gboolean should_skip_plugin_for_candidate(const Candidate *cand, const Plugin *plugin, int depth) {
+static gboolean should_skip_plugin_for_candidate(const Candidate *cand, const Plugin *plugin, int depth __attribute__((unused))) {
     if (!cand || !plugin) return TRUE;
 
-    const char *last_step = candidate_last_step(cand);
-    gboolean structured_artifact = has_structured_artifact(&cand->buf);
 
-    if (g_strcmp0(last_step, plugin->name) == 0) return TRUE;
-    if (should_stop_on_readable_text(cand) && is_exploratory_transform(plugin->name)) return TRUE;
-    if (structured_artifact && is_exploratory_transform(plugin->name)) return TRUE;
-    if (is_exploratory_transform(plugin->name) && !is_promising_text_candidate(&cand->buf)) return TRUE;
-
-    if (depth == 0 && g_strcmp0(last_step, "Input") == 0) {
-        if (is_binary_like(&cand->buf)) return TRUE;
-        if (is_hex_like(&cand->buf) && g_strcmp0(plugin->name, "Hex") != 0) return TRUE;
-        if (is_morse_like(&cand->buf) && g_strcmp0(plugin->name, "Morse") != 0) return TRUE;
+    
+    // Removed hard block for sequential identical plugins (e.g., Hex -> Hex)
+    // The robust candidate_pipeline_score and visited deduplication will correctly
+    // prune infinite loops while allowing valid nested encodings.
+    // We ALSO do not return TRUE on readable_text, because the text might just be
+    // intermediate Base64 output that coincidentally passes the loose english heuristic!
+    
+    // Skip exploratory transforms on structured data
+    if (has_structured_artifact(&cand->buf) && is_exploratory_transform(plugin->name)) {
+        return TRUE;
     }
-
+    
     return FALSE;
 }
 
@@ -417,76 +516,48 @@ static Candidate* build_decoded_candidate(const Candidate *cand, const char *ste
         buffer_free(&next_buf);
         return NULL;
     }
-    if (!has_structured_artifact(&next_buf) &&
-        printable_ratio(&next_buf) < 0.55 &&
-        !is_promising_text_candidate(&next_buf)) {
-        buffer_free(&next_buf);
-        return NULL;
-    }
 
     Candidate *next = g_new0(Candidate, 1);
     next->buf = next_buf;
+    next->history = g_list_copy_deep(cand->history, (GCopyFunc)step_info_clone, NULL);
+    next->history = g_list_append(next->history, step_info_new(step_name, next_buf));
     next->steps = g_list_copy_deep(cand->steps, (GCopyFunc)g_strdup, NULL);
     next->steps = g_list_append(next->steps, g_strdup(step_name));
     next->meta = g_strdup("");
-    next->score = candidate_pipeline_score(next);
+    next->score = candidate_pipeline_score(next, score_readability(cand->buf.data, cand->buf.len));
     return next;
 }
 
 static GList* generate_builtin_candidates(const Candidate *cand) {
     GList *produced = NULL;
-    const char *last_step = candidate_last_step(cand);
     char *input = g_strndup((const char*)cand->buf.data, cand->buf.len);
     if (!input) return NULL;
 
-    gboolean input_stage = (g_strcmp0(last_step, "Input") == 0);
-    gboolean prefer_binary = input_stage && is_binary_like(&cand->buf);
-    gboolean prefer_hex = input_stage && !prefer_binary && is_hex_like(&cand->buf);
-    gboolean prefer_morse = input_stage && !prefer_binary && !prefer_hex && is_morse_like(&cand->buf);
-    gboolean prefer_base64 = input_stage && !prefer_binary && !prefer_hex && !prefer_morse && is_base64_like(&cand->buf);
+    // We no longer hard-stop on readable text here, as intermediate 
+    // structured formats (like Base64) can sometimes pass as text.
 
-    if (prefer_binary) {
-        Candidate *next = build_decoded_candidate(cand, "Binary", decode_binary(input));
-        if (next) produced = g_list_append(produced, next);
-        g_free(input);
-        return produced;
-    }
+    gboolean exact_binary = is_binary(input, cand->buf.len);
+    gboolean exact_hex = is_hex(input, cand->buf.len);
+    gboolean exact_morse = is_morse(input, cand->buf.len);
+    gboolean exact_base64 = is_base64(input, cand->buf.len);
 
-    if (prefer_hex) {
-        Candidate *next = build_decoded_candidate(cand, "Hex", decode_hex(input));
-        if (next) produced = g_list_append(produced, next);
-        g_free(input);
-        return produced;
-    }
-
-    if (prefer_morse) {
-        Candidate *next = build_decoded_candidate(cand, "Morse", decode_morse(input));
-        if (next) produced = g_list_append(produced, next);
-        g_free(input);
-        return produced;
-    }
-
-    if (prefer_base64) {
-        Candidate *next = build_decoded_candidate(cand, "Base64", decode_base64(input));
-        if (next) produced = g_list_append(produced, next);
-        g_free(input);
-        return produced;
-    }
-
-    if (g_strcmp0(last_step, "Binary") != 0 && is_binary(input, cand->buf.len)) {
+    if (exact_binary) {
         Candidate *next = build_decoded_candidate(cand, "Binary", decode_binary(input));
         if (next) produced = g_list_append(produced, next);
     }
-    if (g_strcmp0(last_step, "Hex") != 0 && is_hex(input, cand->buf.len)) {
+
+    if (exact_hex) {
         Candidate *next = build_decoded_candidate(cand, "Hex", decode_hex(input));
         if (next) produced = g_list_append(produced, next);
     }
-    if (g_strcmp0(last_step, "Base64") != 0 && is_base64(input, cand->buf.len)) {
-        Candidate *next = build_decoded_candidate(cand, "Base64", decode_base64(input));
+
+    if (exact_morse) {
+        Candidate *next = build_decoded_candidate(cand, "Morse", decode_morse(input));
         if (next) produced = g_list_append(produced, next);
     }
-    if (g_strcmp0(last_step, "Morse") != 0 && is_morse(input, cand->buf.len)) {
-        Candidate *next = build_decoded_candidate(cand, "Morse", decode_morse(input));
+
+    if (exact_base64) {
+        Candidate *next = build_decoded_candidate(cand, "Base64", decode_base64(input));
         if (next) produced = g_list_append(produced, next);
     }
 
@@ -499,6 +570,7 @@ typedef struct {
     Plugin *plugin;
     GMutex *results_mutex;
     GList **results;
+    volatile gint *pending_tasks;
 } PipelineTask;
 
 static void pipeline_task_free(PipelineTask *task) {
@@ -507,6 +579,7 @@ static void pipeline_task_free(PipelineTask *task) {
 
 static void pipeline_executor_worker(gpointer data, gpointer user_data) {
     (void)user_data;
+    g_usleep(2500); // 2.5ms sleep to ensure ~10% CPU on 4-thread i5-7200U
     PipelineTask *task = (PipelineTask*)data;
     const Candidate *cand = task->cand;
     Plugin *p = task->plugin;
@@ -538,10 +611,12 @@ static void pipeline_executor_worker(gpointer data, gpointer user_data) {
         Candidate *next = g_new0(Candidate, 1);
         next->buf = *res;
         g_free(res);
+        next->history = g_list_copy_deep(cand->history, (GCopyFunc)step_info_clone, NULL);
+        next->history = g_list_append(next->history, step_info_new(p->name, next->buf));
         next->steps = g_list_copy_deep(cand->steps, (GCopyFunc)g_strdup, NULL);
         next->steps = g_list_append(next->steps, g_strdup(p->name));
         next->meta = g_strdup(p->meta_info ? p->meta_info : "");
-        next->score = candidate_pipeline_score(next);
+        next->score = candidate_pipeline_score(next, score_readability(cand->buf.data, cand->buf.len));
         produced = g_list_append(produced, next);
     }
     g_list_free(results);
@@ -552,7 +627,11 @@ static void pipeline_executor_worker(gpointer data, gpointer user_data) {
         g_mutex_unlock(task->results_mutex);
     }
 
+    volatile gint *pending = task->pending_tasks;
     pipeline_task_free(task);
+    if (pending) {
+        g_atomic_int_dec_and_test(pending);
+    }
 }
 
 static GList* dedupe_candidate_results(GList *candidates, GHashTable *visited) {
@@ -572,29 +651,110 @@ static GList* dedupe_candidate_results(GList *candidates, GHashTable *visited) {
     return deduped;
 }
 
+// Adaptive beam width based on score variance
+// Intelligent beam width management based on score distribution and variance
+static int adaptive_beam_width(GList *candidates, int base_width) {
+    if (!candidates) return base_width;
+    size_t count = g_list_length(candidates);
+    if (count < 2) return base_width;
+    
+    Candidate *top = (Candidate*)candidates->data;
+    
+    // Target confidence: if we have a very high score, we narrow focus
+    if (top->score > 1.2) return MAX(base_width / 2, 5);
+    if (top->score > 0.9) return MAX(base_width - 2, 8);
+
+    // If top candidates are all mediocre and close in score, widen search to find more paths
+    Candidate *last_sampled = (Candidate*)g_list_nth_data(candidates, MIN(count - 1, (size_t)base_width - 1));
+    if (last_sampled) {
+        double range = top->score - last_sampled->score;
+        if (range < 0.1) return MIN(base_width * 2, 40); // Widen significantly
+    }
+    
+    return base_width;
+}
+
+// Pruning strategy that maintains diversity of transform types in the beam
+static GList* prune_and_diversify_beam(GList *candidates, int target_width) {
+    if (!candidates) return NULL;
+    if ((int)g_list_length(candidates) <= target_width) return candidates;
+
+    GList *result = NULL;
+    GHashTable *type_counts = g_hash_table_new(g_str_hash, g_str_equal);
+    int total_added = 0;
+    
+    // Max candidates per specific transform type (e.g. don't keep 20 variants of Caesar)
+    int max_per_type = MAX(2, target_width / 4);
+
+    GList *next;
+    for (GList *iter = candidates; iter && total_added < target_width; iter = next) {
+        next = iter->next;
+        Candidate *cand = (Candidate*)iter->data;
+        const char *last_step = candidate_last_step(cand);
+        
+        if (!last_step) last_step = "unknown";
+        
+        int count = GPOINTER_TO_INT(g_hash_table_lookup(type_counts, last_step));
+        
+        // Keep candidate if it's high quality or if its type isn't over-represented
+        if (cand->score > 1.0 || count < max_per_type) {
+            g_hash_table_insert(type_counts, (gpointer)last_step, GINT_TO_POINTER(count + 1));
+            // Move node from candidates to result
+            candidates = g_list_remove_link(candidates, iter);
+            result = g_list_concat(result, iter);
+            total_added++;
+        }
+    }
+    
+    // Clean up remaining candidates
+    g_list_free_full(candidates, (GDestroyNotify)candidate_free);
+    g_hash_table_destroy(type_counts);
+    
+    return result;
+}
+
 static GList* execute_planned_pipeline(const Buffer *input, const PipelinePlan *plan) {
     if (!input || !input->data || input->len == 0 || !plan) return NULL;
 
+    // Initialize global thread pool once
+    init_pipeline_pool();
+
     GHashTable *visited = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     GList *beam = NULL;
+    GList *all_seen = NULL;
 
     Candidate *init = g_new0(Candidate, 1);
     init->buf = buffer_clone(input);
     init->score = score_readability(init->buf.data, init->buf.len);
+    init->history = g_list_append(NULL, step_info_new("Input", init->buf));
     init->steps = g_list_append(NULL, g_strdup("Input"));
     init->meta = g_strdup("");
     beam = g_list_append(beam, init);
+    all_seen = g_list_append(all_seen, candidate_clone(init));
     g_hash_table_add(visited, buffer_key(&init->buf));
+
+    int current_beam_width = plan->beam_width;
 
     for (int depth = 0; depth < plan->max_depth; depth++) {
         GList *new_beam = NULL;
+        GList *frozen_beam = NULL;
         GMutex results_mutex;
+        volatile gint pending_tasks = 0;
         g_mutex_init(&results_mutex);
-        GError *pool_error = NULL;
-        GThreadPool *pool = g_thread_pool_new(pipeline_executor_worker, NULL, -1, FALSE, &pool_error);
-        if (!pool_error && pool) {
+        
+        // Use global thread pool instead of creating new one
+        GThreadPool *pool = g_pipeline_pool;
+        if (pool) {
             for (GList *iter = beam; iter; iter = iter->next) {
                 Candidate *cand = (Candidate*)iter->data;
+                if (should_stop_on_readable_text(cand)) {
+                    Candidate *frozen = candidate_clone(cand);
+                    g_mutex_lock(&results_mutex);
+                    frozen_beam = g_list_append(frozen_beam, frozen);
+                    g_mutex_unlock(&results_mutex);
+                    continue;
+                }
+
                 GList *builtin = generate_builtin_candidates(cand);
                 if (builtin) {
                     g_mutex_lock(&results_mutex);
@@ -613,15 +773,32 @@ static GList* execute_planned_pipeline(const Buffer *input, const PipelinePlan *
                     task->plugin = p;
                     task->results_mutex = &results_mutex;
                     task->results = &new_beam;
-                    g_thread_pool_push(pool, task, NULL);
+                    task->pending_tasks = &pending_tasks;
+                    g_atomic_int_inc(&pending_tasks);
+                    
+                    GError *error = NULL;
+                    if (!g_thread_pool_push(pool, task, &error)) {
+                        g_atomic_int_dec_and_test(&pending_tasks);
+                        pipeline_task_free(task);
+                        if (error) g_error_free(error);
+                    }
                 }
             }
-            g_thread_pool_free(pool, FALSE, TRUE);
+            // Wait for all locally dispatched tasks to complete
+            while (g_atomic_int_get(&pending_tasks) > 0) {
+                g_usleep(1000); // 1ms
+            }
         } else {
-            if (pool_error) g_error_free(pool_error);
+            // Fallback to sequential processing if pool unavailable
 
             for (GList *iter = beam; iter; iter = iter->next) {
                 Candidate *cand = (Candidate*)iter->data;
+                if (should_stop_on_readable_text(cand)) {
+                    Candidate *frozen = candidate_clone(cand);
+                    frozen_beam = g_list_append(frozen_beam, frozen);
+                    continue;
+                }
+
                 GList *builtin = generate_builtin_candidates(cand);
                 if (builtin) {
                     new_beam = g_list_concat(new_beam, builtin);
@@ -659,10 +836,12 @@ static GList* execute_planned_pipeline(const Buffer *input, const PipelinePlan *
                         Candidate *next = g_new0(Candidate, 1);
                         next->buf = *res;
                         g_free(res);
+                        next->history = g_list_copy_deep(cand->history, (GCopyFunc)step_info_clone, NULL);
+                        next->history = g_list_append(next->history, step_info_new(p->name, next->buf));
                         next->steps = g_list_copy_deep(cand->steps, (GCopyFunc)g_strdup, NULL);
                         next->steps = g_list_append(next->steps, g_strdup(p->name));
                         next->meta = g_strdup(p->meta_info ? p->meta_info : "");
-                        next->score = candidate_pipeline_score(next);
+                        next->score = candidate_pipeline_score(next, score_readability(next->buf.data, next->buf.len));
                         new_beam = g_list_append(new_beam, next);
                     }
                     g_list_free(results);
@@ -672,14 +851,31 @@ static GList* execute_planned_pipeline(const Buffer *input, const PipelinePlan *
         g_mutex_clear(&results_mutex);
 
         new_beam = dedupe_candidate_results(new_beam, visited);
+        new_beam = g_list_concat(new_beam, frozen_beam);
 
         if (!new_beam) break;
 
         new_beam = g_list_sort(new_beam, (GCompareFunc)compare_candidate);
-        while ((int)g_list_length(new_beam) > plan->beam_width) {
-            GList *last = g_list_last(new_beam);
-            candidate_free((Candidate*)last->data);
-            new_beam = g_list_delete_link(new_beam, last);
+        
+        // Adaptive beam width
+        current_beam_width = adaptive_beam_width(new_beam, plan->beam_width);
+        
+        // Apply Diversity Filtering + Pruning
+        new_beam = prune_and_diversify_beam(new_beam, current_beam_width);
+
+        // Accumulate winners into all_seen
+        for (GList *iter = new_beam; iter; iter = iter->next) {
+            all_seen = g_list_append(all_seen, candidate_clone((Candidate*)iter->data));
+        }
+
+        // Early termination: stop if we found high-confidence result
+        if (new_beam && is_high_confidence_result((Candidate*)new_beam->data)) {
+            for (GList *iter = beam; iter; iter = iter->next) {
+                candidate_free((Candidate*)iter->data);
+            }
+            g_list_free(beam);
+            beam = new_beam;
+            break;
         }
 
         for (GList *iter = beam; iter; iter = iter->next) {
@@ -690,7 +886,26 @@ static GList* execute_planned_pipeline(const Buffer *input, const PipelinePlan *
     }
 
     g_hash_table_destroy(visited);
-    return beam;
+    
+    // Clean up remaining beam since we return all_seen
+    for (GList *iter = beam; iter; iter = iter->next) {
+        candidate_free((Candidate*)iter->data);
+    }
+    g_list_free(beam);
+
+    all_seen = g_list_sort(all_seen, (GCompareFunc)compare_candidate);
+    
+    GHashTable *final_visited = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    all_seen = dedupe_candidate_results(all_seen, final_visited);
+    g_hash_table_destroy(final_visited);
+    
+    while ((int)g_list_length(all_seen) > plan->beam_width) {
+        GList *last = g_list_last(all_seen);
+        candidate_free((Candidate*)last->data);
+        all_seen = g_list_delete_link(all_seen, last);
+    }
+
+    return all_seen;
 }
 
 GList* pipeline_beam_search(Buffer input, int max_depth, int beam_width) {
@@ -709,11 +924,11 @@ GList* pipeline_beam_search(Buffer input, int max_depth, int beam_width) {
     init->buf.len = input.len;
     init->score = score_readability(init->buf.data, init->buf.len);
     init->steps = g_list_append(NULL, g_strdup("Input"));
+    init->history = g_list_append(NULL, step_info_new("Input", init->buf));
     init->meta = g_strdup("");
     beam = g_list_append(beam, init);
 
-    char *key = buffer_key_raw(init->buf.data, init->buf.len);
-    g_hash_table_add(visited, key);
+    g_hash_table_add(visited, GUINT_TO_POINTER(buffer_hash_fast(&init->buf)));
 
     for (int depth = 0; depth < max_depth; depth++) {
         GList *new_beam = NULL;
@@ -742,7 +957,7 @@ GList* pipeline_beam_search(Buffer input, int max_depth, int beam_width) {
                 for (GList *r = results; r; r = r->next) {
                     Buffer *res = (Buffer*)r->data;
                     if (!res->data || res->len == 0) {
-                        if (res) g_free(res);
+                        buffer_box_free(res);
                         continue;
                     }
 
@@ -754,14 +969,13 @@ GList* pipeline_beam_search(Buffer input, int max_depth, int beam_width) {
                         continue;
                     }
 
-                    char *key = buffer_key_raw(res->data, res->len);
-                    if (g_hash_table_contains(visited, key)) {
-                        g_free(key);
+                    guint32 hash = buffer_hash_fast(res);
+                    if (g_hash_table_contains(visited, GUINT_TO_POINTER(hash))) {
                         g_free(res->data);
                         g_free(res);
                         continue;
                     }
-                    g_hash_table_add(visited, key);
+                    g_hash_table_add(visited, GUINT_TO_POINTER(hash));
 
                     Candidate *new_cand = g_new0(Candidate, 1);
                     new_cand->buf = *res; // take ownership
@@ -771,6 +985,8 @@ GList* pipeline_beam_search(Buffer input, int max_depth, int beam_width) {
                     char *step_name = g_strdup_printf("%s%s", p->name,
                                                        p->meta_info ? p->meta_info : "");
                     new_cand->steps = g_list_append(new_cand->steps, step_name);
+                    new_cand->history = g_list_copy_deep(cand->history, (GCopyFunc)step_info_clone, NULL);
+                    new_cand->history = g_list_append(new_cand->history, step_info_new(step_name, new_cand->buf));
                     new_cand->meta = g_strdup(p->meta_info ? p->meta_info : "");
 
                     new_beam = g_list_append(new_beam, new_cand);
@@ -783,6 +999,39 @@ GList* pipeline_beam_search(Buffer input, int max_depth, int beam_width) {
         if (!new_beam) break;
 
         new_beam = g_list_sort(new_beam, (GCompareFunc)compare_candidate);
+        
+        // --- Branch Diversity Pruning ---
+        // Ensure no single transform type (e.g. only XOR variants) fills the entire beam.
+        GHashTable *type_counts = g_hash_table_new(g_str_hash, g_str_equal);
+        GList *diversified = NULL;
+        GList *discarded = NULL;
+        
+        for (GList *iter = new_beam; iter; iter = iter->next) {
+            Candidate *cand = (Candidate*)iter->data;
+            const char *last_step = cand->steps ? (const char*)g_list_last(cand->steps)->data : "None";
+            
+            char *type_name = g_strdup(last_step);
+            char *space = strchr(type_name, ' ');
+            if (space) *space = '\0';
+            
+            int count = GPOINTER_TO_INT(g_hash_table_lookup(type_counts, type_name));
+            if (count < 3 || g_list_length(diversified) < (beam_width / 2)) {
+                diversified = g_list_append(diversified, cand);
+                g_hash_table_insert(type_counts, type_name, GINT_TO_POINTER(count + 1));
+            } else {
+                discarded = g_list_append(discarded, cand);
+            }
+            g_free(type_name);
+        }
+        
+        // Clean up
+        g_list_free(new_beam);
+        g_hash_table_destroy(type_counts);
+        for (GList *iter = discarded; iter; iter = iter->next) candidate_free(iter->data);
+        g_list_free(discarded);
+        
+        new_beam = diversified;
+
         int count = g_list_length(new_beam);
         while (count > beam_width) {
             GList *last = g_list_last(new_beam);

@@ -8,5 +8,6 @@
         <file>icons/app.png</file>
         <file alias="branding/hyperdecode-mark.svg">../docs/branding/hyperdecode-mark.svg</file>
         <file alias="branding/hyperdecode-logo.svg">../docs/branding/hyperdecode-logo.svg</file>
+        <file alias="branding/logo_premium.png">icons/logo_premium.png</file>
     </qresource>
 </RCC>

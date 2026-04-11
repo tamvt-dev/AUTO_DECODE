@@ -10,6 +10,12 @@ QWidget[class="appShell"] {
     background-color: #091022;
 }
 
+QLabel[class="appLogo"] {
+    background: transparent;
+    border: none;
+    margin-right: 6px;
+}
+
 QMenuBar,
 QMenu,
 QStatusBar {
@@ -223,11 +229,11 @@ QLabel[class="sectionLabel"] {
 }
 
 QLabel[class="appTitle"] {
-    color: #E7E5E4;
-}
-
-QLabel[class="appSubtitle"] {
-    color: #A99F9B;
+    color: #37F712;
+    font-family: "Outfit", "Segoe UI";
+    text-transform: uppercase;
+    margin: 0;
+    padding: 0;
 }
 
 QLabel[class="infoLabel"] {
@@ -368,4 +374,49 @@ QWidget[class="notificationToast"][tone="error"] {
 
 QLabel[class="notificationLabel"] {
     color: #E7E5E4;
+}
+
+QListWidget[class="candidateList"] {
+    background-color: #10162F;
+    border: 1px solid #252D4A;
+    border-radius: 4px;
+}
+
+QListWidget[class="candidateList"]::item {
+    background-color: #141933;
+    color: #E7E5E4;
+    border-radius: 4px;
+    margin: 2px;
+    padding: 8px;
+}
+
+QListWidget[class="candidateList"]::item:selected {
+    background-color: #252D4A;
+    border: 1px solid #37F712;
+    color: #37F712;
+}
+
+QPushButton[class="stepButton"] {
+    background-color: #141933;
+    color: #A99F9B;
+    border: 1px solid #252D4A;
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 11px;
+}
+
+QPushButton[class="stepButton"]:hover {
+    border-color: #37F712;
+    color: #37F712;
+}
+
+QLabel[class="flowArrow"] {
+    color: #252D4A;
+    font-weight: bold;
+}
+
+QComboBox[class="candidateCombo"] {
+    font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+    font-size: 12px;
+    padding: 6px;
 }

@@ -17,23 +17,43 @@
 #include <QSignalBlocker>
 #include <QPixmap>
 #include <Qt>
+#include <QtConcurrent>
+#include <QListWidget>
+#include <QScrollArea>
+#include <QGroupBox>
 #include "console_manager.h"
 #include "history_manager.h"
 #include "history_tab.h"
+#include "decoder_engine.h"
+#include "recipe_manager.h"
+#include "notification_manager.h"
+#include "batch_processor.h"
+#include "recipe_tab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , engine(DecoderEngine::instance())
+    , recipeManager(RecipeManager::instance())
     , notificationManager(NotificationManager::instance())
+    , batchProcessor(new BatchProcessor())
     , autoDecode(false)
     , isDarkTheme(true)
     , notificationsEnabled(true)
+    , hexViewEnabled(false)
 {
     setupUi();
     preloadThemes();
 
     // Initialize notification manager
     notificationManager.setParentWidget(this);
+
+    // Set batch processor parent for proper cleanup
+    batchProcessor->setParent(this);
+
+    // Connect batch processor signals
+    connect(batchProcessor, &BatchProcessor::progressUpdated, this, &MainWindow::onBatchProgress);
+    connect(batchProcessor, &BatchProcessor::statusUpdated, this, &MainWindow::onBatchStatus);
+    connect(batchProcessor, &BatchProcessor::finished, this, &MainWindow::onBatchFinished);
 
     // Load preferences before applying the initial theme.
     loadPreferences();
@@ -69,6 +89,11 @@ MainWindow::MainWindow(QWidget *parent)
     });
     connect(showConsoleCheck, &QCheckBox::toggled, this, &MainWindow::toggleConsole);
     connect(historyTab, &HistoryTab::itemSelected, this, &MainWindow::onHistoryItemSelected);
+
+    // Hex view toggle
+    connect(hexViewCheck, &QCheckBox::toggled, this, &MainWindow::toggleHexView);
+
+    // Batch connections (connected in setupUi)
 }
 
 MainWindow::~MainWindow()
@@ -97,28 +122,23 @@ void MainWindow::setupUi()
     tabs->setTabPosition(QTabWidget::North);
 
     QHBoxLayout *headerLayout = new QHBoxLayout;
-    headerLayout->setSpacing(14);
+    headerLayout->setSpacing(12);
+    headerLayout->setContentsMargins(0, 0, 0, 4);
 
     QLabel *logoLabel = new QLabel;
     logoLabel->setProperty("class", "appLogo");
     QPixmap logoPixmap(":/branding/hyperdecode-mark.svg");
-    logoLabel->setPixmap(logoPixmap.scaled(54, 54, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-    logoLabel->setFixedSize(54, 54);
+    logoLabel->setPixmap(logoPixmap.scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    logoLabel->setFixedSize(40, 40);
     logoLabel->setAlignment(Qt::AlignCenter);
-
-    QVBoxLayout *titleLayout = new QVBoxLayout;
-    titleLayout->setSpacing(4);
-    titleLayout->setContentsMargins(0, 0, 0, 0);
 
     QLabel *titleLabel = new QLabel("HYPERDECODE");
     titleLabel->setProperty("class", "appTitle");
-    QLabel *subtitleLabel = new QLabel("Decode, encode, and inspect transformations in a compact mono workspace.");
-    subtitleLabel->setProperty("class", "appSubtitle");
+    titleLabel->setStyleSheet("font-size: 18px; font-weight: bold; letter-spacing: 1px; color: #37F712;");
 
-    titleLayout->addWidget(titleLabel);
-    titleLayout->addWidget(subtitleLabel);
-    headerLayout->addWidget(logoLabel, 0, Qt::AlignTop);
-    headerLayout->addLayout(titleLayout, 1);
+    headerLayout->addWidget(logoLabel);
+    headerLayout->addWidget(titleLabel);
+    headerLayout->addStretch();
 
     mainLayout->addLayout(headerLayout);
 
@@ -278,19 +298,52 @@ void MainWindow::setupUi()
     pipelineLayout->addWidget(pipelineScoreLabel);
     pipelineLayout->addWidget(pipelineStepsLabel);
 
-    QLabel *pipelineOutputLabel = new QLabel("Best Result:");
+    QHBoxLayout *selectionLayout = new QHBoxLayout;
+    QLabel *listLabel = new QLabel("Top Candidates:");
+    listLabel->setProperty("class", "sectionLabel");
+    selectionLayout->addWidget(listLabel);
+
+    candidateCombo = new QComboBox;
+    candidateCombo->setProperty("class", "candidateCombo");
+    candidateCombo->setMinimumWidth(350);
+    selectionLayout->addWidget(candidateCombo);
+    selectionLayout->addStretch();
+    pipelineLayout->addLayout(selectionLayout);
+
+    // Detail section below selection
+    QVBoxLayout *detailSide = new QVBoxLayout;
+    detailSide->setSpacing(12);
+
+    QLabel *flowLabel = new QLabel("Transformation Flow (Click step to inspect):");
+    flowLabel->setProperty("class", "sectionLabel");
+    detailSide->addWidget(flowLabel);
+
+    QScrollArea *flowScroll = new QScrollArea;
+    flowScroll->setWidgetResizable(true);
+    flowScroll->setFixedHeight(60);
+    flowScroll->setFrameShape(QFrame::NoFrame);
+    historyFlowWidget = new QWidget;
+    historyFlowWidget->setLayout(new QHBoxLayout);
+    historyFlowWidget->layout()->setContentsMargins(0, 0, 0, 0);
+    flowScroll->setWidget(historyFlowWidget);
+    detailSide->addWidget(flowScroll);
+
+    QLabel *pipelineOutputLabel = new QLabel("Output Inspection:");
     pipelineOutputLabel->setProperty("class", "sectionLabel");
-    pipelineLayout->addWidget(pipelineOutputLabel);
+    detailSide->addWidget(pipelineOutputLabel);
 
     pipelineOutput = new QTextEdit;
     pipelineOutput->setProperty("class", "editor output");
     pipelineOutput->setReadOnly(true);
     pipelineOutput->setFont(fixedFont);
-    pipelineOutput->setMinimumHeight(150);
-    pipelineLayout->addWidget(pipelineOutput);
+    pipelineOutput->setMinimumHeight(120);
+    detailSide->addWidget(pipelineOutput);
+
+    pipelineLayout->addLayout(detailSide);
 
     connect(runPipelineBtn, &QPushButton::clicked, this, &MainWindow::runPipeline);
     connect(copyPipelineBtn, &QPushButton::clicked, this, &MainWindow::copyPipeline);
+    connect(candidateCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onCandidateSelected);
 
     tabs->addTab(pipelineTab, "Pipeline");
 
@@ -374,6 +427,80 @@ void MainWindow::setupUi()
     historyTab = new HistoryTab;
     historyTab->setProperty("class", "card");
     tabs->addTab(historyTab, "History");
+
+    // ---------- Batch Tab ----------
+    QWidget *batchTab = new QWidget;
+    QVBoxLayout *batchLayout = new QVBoxLayout(batchTab);
+    batchLayout->setSpacing(8);
+
+    QHBoxLayout *inputDirLayout = new QHBoxLayout;
+    QLabel *inputDirLabel = new QLabel("Input Dir:");
+    batchInputDir = new QLineEdit;
+    QPushButton *browseInputBtn = new QPushButton("Browse");
+    inputDirLayout->addWidget(inputDirLabel);
+    inputDirLayout->addWidget(batchInputDir);
+    inputDirLayout->addWidget(browseInputBtn);
+    batchLayout->addLayout(inputDirLayout);
+
+    QHBoxLayout *outputDirLayout = new QHBoxLayout;
+    QLabel *outputDirLabel = new QLabel("Output Dir:");
+    batchOutputDir = new QLineEdit;
+    QPushButton *browseOutputBtn = new QPushButton("Browse");
+    outputDirLayout->addWidget(outputDirLabel);
+    outputDirLayout->addWidget(batchOutputDir);
+    outputDirLayout->addWidget(browseOutputBtn);
+    batchLayout->addLayout(outputDirLayout);
+
+    QLabel *recipeLabel = new QLabel("Recipe JSON:");
+    batchRecipeJson = new QTextEdit;
+    batchRecipeJson->setPlaceholderText("{\"steps\": [{\"name\": \"base64_decode\"}, ...]}");
+    batchRecipeJson->setMinimumHeight(100);
+    batchLayout->addWidget(recipeLabel);
+    batchLayout->addWidget(batchRecipeJson);
+
+    QHBoxLayout *batchButtonLayout = new QHBoxLayout;
+    QPushButton *startBatchBtn = new QPushButton("Start Batch");
+    startBatchBtn->setProperty("class", "primary");
+    QPushButton *clearBatchLogBtn = new QPushButton("Clear Log");
+    batchButtonLayout->addWidget(startBatchBtn);
+    batchButtonLayout->addWidget(clearBatchLogBtn);
+    batchButtonLayout->addStretch();
+    batchLayout->addLayout(batchButtonLayout);
+
+    batchProgressBar = new QProgressBar;
+    batchProgressBar->setRange(0, 100);
+    batchProgressBar->setValue(0);
+    batchLayout->addWidget(batchProgressBar);
+
+    batchLog = new QTextEdit;
+    batchLog->setReadOnly(true);
+    batchLog->setMaximumHeight(150);
+    batchLayout->addWidget(batchLog);
+
+    connect(startBatchBtn, &QPushButton::clicked, this, &MainWindow::startBatch);
+    connect(clearBatchLogBtn, &QPushButton::clicked, [this]() { batchLog->clear(); });
+    connect(browseInputBtn, &QPushButton::clicked, [this]() {
+        QString dir = QFileDialog::getExistingDirectory(this, "Select Input Directory");
+        if (!dir.isEmpty()) batchInputDir->setText(dir);
+    });
+    connect(browseOutputBtn, &QPushButton::clicked, [this]() {
+        QString dir = QFileDialog::getExistingDirectory(this, "Select Output Directory");
+        if (!dir.isEmpty()) batchOutputDir->setText(dir);
+    });
+
+    // Batch processor signals (static for now)
+    // connect for signals when making instance-based
+
+    // Hex view checkbox in Settings tab? Add to settings if needed
+    hexViewCheck = new QCheckBox("Hex View Outputs");
+    settingsLayout->insertWidget(1, hexViewCheck);  // After theme
+
+    tabs->addTab(batchTab, "Batch");
+
+    // ---------- Recipe Tab ----------
+    recipeTab = new RecipeTab;
+    recipeTab->setProperty("class", "card");
+    tabs->addTab(recipeTab, "Recipe");
 
     mainLayout->addWidget(tabs);
     setCentralWidget(central);
@@ -538,24 +665,79 @@ void MainWindow::runPipeline()
         return;
     }
 
-    updateStatus("Running smart pipeline (heuristic -> planner -> executor -> scoring -> retry)...");
-    auto result = engine.runPipeline(input, 3, 5);
+    updateStatus("Running smart pipeline (Adaptive Beam Search + Diversity)...");
+    
+    // Disable UI
+    candidateCombo->clear();
+    currentCandidates.clear();
+    pipelineOutput->clear();
 
-    if (result.success) {
-        pipelineOutput->setPlainText(result.output);
-        pipelineScoreLabel->setText(QString("Score: %1").arg(result.score, 0, 'f', 3));
-        pipelineStepsLabel->setText(result.steps);
-        updateStatus(QString("Pipeline finished. Score: %1").arg(result.score, 0, 'f', 3));
+    // Run pipeline in background
+    (void)QtConcurrent::run([this, input]() {
+        auto result = engine.runPipeline(input, 6, 12); // Deep search
+        
+        QMetaObject::invokeMethod(this, [this, result]() {
+            if (result.success && !result.candidates.isEmpty()) {
+                currentCandidates = result.candidates;
+                
+                QSignalBlocker blocker(candidateCombo);
+                for (const auto &cand : currentCandidates) {
+                    QString label = QString("[%1] %2").arg(QString::number(cand.score, 'f', 2), cand.steps.left(50) + "...");
+                    candidateCombo->addItem(label);
+                }
+                
+                candidateCombo->setCurrentIndex(0);
+                onCandidateSelected(0); // Manually trigger since blocked
+                updateStatus(QString("Pipeline found %1 candidates").arg(currentCandidates.size()));
+            } else {
+                pipelineOutput->setPlainText("Pipeline discovered no valid paths.");
+                updateStatus(result.errorMessage, 3000);
+            }
+        }, Qt::QueuedConnection);
+    });
+}
 
-        // Record in history
-        HistoryManager::instance().addEntry("pipeline", result.steps.simplified(), input, result.output,
-                                            0.0, false);
-    } else {
-        pipelineOutput->setPlainText("Pipeline found nothing");
-        pipelineScoreLabel->setText("Score: —");
-        pipelineStepsLabel->setText("Flow: Heuristic -> Planner -> Executor -> Scoring -> Retry");
-        updateStatus("Pipeline found no result", 3000);
+void MainWindow::onCandidateSelected(int index)
+{
+    if (index < 0 || index >= currentCandidates.size()) return;
+
+    const auto &cand = currentCandidates[index];
+    pipelineOutput->setPlainText(cand.output);
+    pipelineScoreLabel->setText(QString("Score: %1").arg(cand.score, 0, 'f', 3));
+    pipelineStepsLabel->setText("Route: " + cand.steps);
+
+    // Rebuild Flow Buttons
+    QLayoutItem *item;
+    while ((item = historyFlowWidget->layout()->takeAt(0)) != nullptr) {
+        if (item->widget()) delete item->widget();
+        delete item;
     }
+
+    for (const auto &step : cand.history) {
+        QPushButton *stepBtn = new QPushButton(step.first);
+        stepBtn->setProperty("class", "stepButton");
+        connect(stepBtn, &QPushButton::clicked, [this, step]() {
+            onHistoryStepClicked(step.first, step.second);
+        });
+        historyFlowWidget->layout()->addWidget(stepBtn);
+        
+        QLabel *arrow = new QLabel("→");
+        arrow->setProperty("class", "flowArrow");
+        historyFlowWidget->layout()->addWidget(arrow);
+    }
+    // Remove last arrow
+    if (historyFlowWidget->layout()->count() > 0) {
+        QLayoutItem *last = historyFlowWidget->layout()->takeAt(historyFlowWidget->layout()->count() - 1);
+        if (last->widget()) delete last->widget();
+        delete last;
+    }
+    ((QHBoxLayout*)historyFlowWidget->layout())->addStretch();
+}
+
+void MainWindow::onHistoryStepClicked(const QString &name, const QString &output)
+{
+    pipelineOutput->setPlainText(output);
+    updateStatus("Inspecting step: " + name);
 }
 
 void MainWindow::clearDecode()
@@ -690,17 +872,20 @@ void MainWindow::loadPreferences()
     isDarkTheme = settings.value("dark_theme", true).toBool();
     autoDecode = settings.value("auto_decode", false).toBool();
     bool showConsole = settings.value("show_console", false).toBool();
+    hexViewEnabled = settings.value("hex_view", false).toBool();
 
     // Update UI to match loaded preferences
     QSignalBlocker notifBlocker(notificationsCheck);
     QSignalBlocker themeBlocker(darkThemeCheck);
     QSignalBlocker autoBlocker(autoDecodeCheck);
     QSignalBlocker consoleBlocker(showConsoleCheck);
+    QSignalBlocker hexBlocker(hexViewCheck);
 
     notificationsCheck->setChecked(notificationsEnabled);
     darkThemeCheck->setChecked(isDarkTheme);
     autoDecodeCheck->setChecked(autoDecode);
     showConsoleCheck->setChecked(showConsole);
+    hexViewCheck->setChecked(hexViewEnabled);
     ConsoleManager::setVisible(showConsole);
 }
 
@@ -712,5 +897,69 @@ void MainWindow::savePreferences()
     settings.setValue("dark_theme", isDarkTheme);
     settings.setValue("auto_decode", autoDecode);
     settings.setValue("show_console", showConsoleCheck->isChecked());
+    settings.setValue("hex_view", hexViewEnabled);
+}
+
+void MainWindow::startBatch()
+{
+    QString inputDir = batchInputDir->text();
+    QString outputDir = batchOutputDir->text();
+    QString recipe = batchRecipeJson->toPlainText();
+
+    if (inputDir.isEmpty() || outputDir.isEmpty() || recipe.isEmpty()) {
+        updateStatus("Please fill input dir, output dir, and recipe JSON", 3000);
+        return;
+    }
+
+    batchProgressBar->setValue(0);
+    batchLog->append("Starting batch process...");
+    batchProcessor->processDir(inputDir, recipe, outputDir);
+    // Note: Signals connected in constructor comment; static method currently, consider instance later
+}
+
+void MainWindow::onBatchProgress(int percent)
+{
+    batchProgressBar->setValue(percent);
+}
+
+void MainWindow::onBatchStatus(const QString &message)
+{
+    batchLog->append(message);
+    updateStatus(message);
+}
+
+void MainWindow::onBatchFinished(const QString &summary)
+{
+    batchLog->append("Batch complete: " + summary);
+    updateStatus(summary, 5000);
+}
+
+QString MainWindow::toHexView(const QString &text)
+{
+    QByteArray bytes = text.toUtf8();
+    QString hex;
+    for (int i = 0; i < bytes.size(); ++i) {
+        hex += QString("%1 ").arg((unsigned char)bytes[i], 2, 16, QChar('0'));
+        if ((i + 1) % 16 == 0) hex += "\n";
+    }
+    return hex;
+}
+
+void MainWindow::toggleHexView(bool enabled)
+{
+    hexViewEnabled = enabled;
+    QString decodeText = decodeOutput->toPlainText();
+    QString encodeText = encodeOutput->toPlainText();
+    QString pipelineText = pipelineOutput->toPlainText();
+
+    if (enabled) {
+        decodeOutput->setPlainText(toHexView(decodeText));
+        encodeOutput->setPlainText(toHexView(encodeText));
+        pipelineOutput->setPlainText(toHexView(pipelineText));
+    } else {
+        // Revert not stored; simple toggle assumes user ok with loss or re-run
+        updateStatus("Hex view toggled; re-run ops to refresh text view");
+    }
+    savePreferences();
 }
 

@@ -7,6 +7,16 @@ typedef struct CacheEntry {
     char *value;
 } CacheEntry;
 
+static void cache_entry_free(CacheEntry *entry) {
+    if (!entry) {
+        return;
+    }
+
+    g_free(entry->key);
+    g_free(entry->value);
+    g_free(entry);
+}
+
 struct LRUCache {
     GHashTable *hash;
     GQueue *order;
@@ -17,7 +27,7 @@ struct LRUCache {
 
 LRUCache* lru_cache_new(size_t max_size) {
     LRUCache *cache = g_new0(LRUCache, 1);
-    cache->hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+    cache->hash = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, (GDestroyNotify)cache_entry_free);
     cache->order = g_queue_new();
     cache->max_size = max_size;
     g_mutex_init(&cache->mutex);
@@ -31,10 +41,6 @@ void lru_cache_free(LRUCache *cache) {
             g_hash_table_destroy(cache->hash);
         }
         if (cache->order) {
-            while (!g_queue_is_empty(cache->order)) {
-                CacheEntry *entry = g_queue_pop_head(cache->order);
-                g_free(entry);
-            }
             g_queue_free(cache->order);
         }
         g_mutex_unlock(&cache->mutex);
@@ -62,9 +68,6 @@ void lru_cache_put(LRUCache *cache, const char *key, const char *value) {
         CacheEntry *oldest = g_queue_pop_tail(cache->order);
         if (oldest) {
             g_hash_table_remove(cache->hash, oldest->key);
-            g_free(oldest->key);
-            g_free(oldest->value);
-            g_free(oldest);
             cache->current_size--;
         }
     }
@@ -105,12 +108,7 @@ void lru_cache_clear(LRUCache *cache) {
     
     g_mutex_lock(&cache->mutex);
     g_hash_table_remove_all(cache->hash);
-    
-    while (!g_queue_is_empty(cache->order)) {
-        CacheEntry *entry = g_queue_pop_head(cache->order);
-        g_free(entry);
-    }
-    
+    g_queue_clear(cache->order);
     cache->current_size = 0;
     g_mutex_unlock(&cache->mutex);
 }

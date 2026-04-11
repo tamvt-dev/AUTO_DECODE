@@ -63,35 +63,6 @@ static DecodeResult* build_decode_result_from_output(const char *input, const ch
     return result;
 }
 
-static DecodeResult* decode_with_plugins(const char *input) {
-    Buffer in_buf = buffer_new((const unsigned char*)input, strlen(input));
-
-    Plugin *plugin = plugin_manager_get_for_input(g_core->plugin_manager, in_buf);
-    if (!plugin || !plugin->decode_single) {
-        buffer_free(&in_buf);
-        return NULL;
-    }
-
-    Buffer out_buf = plugin->decode_single(in_buf);
-    buffer_free(&in_buf);
-
-    if (!out_buf.data) {
-        return NULL;
-    }
-
-    DecodeResult *result = g_new0(DecodeResult, 1);
-    result->output = g_malloc(out_buf.len + 1);
-    memcpy(result->output, out_buf.data, out_buf.len);
-    result->output[out_buf.len] = '\0';
-    result->format = g_strdup(plugin->name);
-    result->input = g_strdup(input);
-    result->error_code = ERROR_OK;
-    result->output_size = out_buf.len;
-
-    buffer_free(&out_buf);
-    return result;
-}
-
 static DecodeResult* decode_with_best_plugin_candidate(const char *input) {
     if (!g_core || !g_core->plugin_manager || !input || !*input) {
         return NULL;
