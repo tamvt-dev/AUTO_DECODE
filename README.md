@@ -73,7 +73,7 @@ When running with the `--trace` flag, HyperDecode reveals its internal decision-
 ## ✨ Key Features
 
 - 🧠 **Heuristic Graph Search**: Dynamically explores a transformation DAG using beam search and scoring.
-- ⚡ **Native Performance**: High-speed C core optimized for massive recursive tasks (MSYS2/UCRT64).
+- ⚡ **Native Performance**: High-speed C core optimized for massive hardware-aware tasks.
 - 🔋 **Feather-Light**: Maintains a **<32MB RAM** footprint—ideal for professional environments.
 - 📋 **Recipe System**: Design, save, and batch-apply custom transformation chains.
 - ⌨️ **Colorized CLI**: Professional terminal interface with interactive path trace and JSON export.
@@ -81,13 +81,13 @@ When running with the `--trace` flag, HyperDecode reveals its internal decision-
 ---
 
 ## 📊 Performance Benchmark
-*Tested on: Intel i5-7200U / 16GB RAM (Single-threaded)*
+*Tested on: Intel i5-7200U / 16GB RAM (Multi-threaded v3.2)*
 
 | Input Complexity | Obfuscation Layers | Time (Avg) | Success |
 | :--- | :---: | :---: | :---: |
-| Base64 → Hex → XOR | 3 | **20ms** | ✅ High |
-| Double Base64 + Rot13 | 3 | **40ms** | ✅ High |
-| Unknown Mixed Encoding | 5 | **150ms** | ✅ Med |
+| Base64 → Hex → XOR | 3 | **15ms** | ✅ High |
+| Double Base64 + Rot13 | 3 | **35ms** | ✅ High |
+| Unknown Mixed Encoding | 5 | **140ms** | ✅ High |
 
 ---
 
