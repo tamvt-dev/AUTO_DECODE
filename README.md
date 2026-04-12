@@ -85,9 +85,9 @@ When running with the `--trace` flag, HyperDecode reveals its internal decision-
 
 | Input Complexity | Obfuscation Layers | Time (Avg) | Success |
 | :--- | :---: | :---: | :---: |
-| Base64 → Hex → XOR | 3 | **12ms** | ✅ High |
-| Double Base64 + Rot13 | 3 | **8ms** | ✅ High |
-| Unknown Mixed Encoding | 5 | **35ms** | ✅ Med |
+| Base64 → Hex → XOR | 3 | **20ms** | ✅ High |
+| Double Base64 + Rot13 | 3 | **40ms** | ✅ High |
+| Unknown Mixed Encoding | 5 | **150ms** | ✅ Med |
 
 ---
 
